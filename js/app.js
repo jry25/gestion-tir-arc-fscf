@@ -152,8 +152,10 @@ class App {
         // Before install prompt (PWA installation)
         window.addEventListener('beforeinstallprompt', (e) => {
             console.log('PWA install prompt available');
-            // You could show a custom install button here
-            e.prompt();
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later (e.g., from a button)
+            window.deferredPrompt = e;
         });
         
         // App installed

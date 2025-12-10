@@ -157,8 +157,17 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('push', (event) => {
     console.log('[Service Worker] Push notification received');
     
+    let body = 'Nouvelle notification';
+    if (event.data) {
+        try {
+            body = event.data.text();
+        } catch (error) {
+            console.error('[Service Worker] Error reading push data:', error);
+        }
+    }
+    
     const options = {
-        body: event.data ? event.data.text() : 'Nouvelle notification',
+        body: body,
         icon: '/icons/icon-192x192.png',
         badge: '/icons/icon-72x72.png',
         vibrate: [200, 100, 200]
