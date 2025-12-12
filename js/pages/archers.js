@@ -42,12 +42,6 @@ export async function render() {
                                 <label class="form-label">Numéro de cible *</label>
                                 <input type="number" name="targetNumber" class="form-input" min="1" required>
                             </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Club</label>
-                                <input type="text" name="club" id="club-input" class="form-input">
-                                <small style="color: var(--light-text);">Appliqué aux 4 archers</small>
-                            </div>
                         </div>
 
                         <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
@@ -64,6 +58,10 @@ export async function render() {
                                 <div class="form-group">
                                     <label class="form-label">Licence *</label>
                                     <input type="text" name="license_A" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Club</label>
+                                    <input type="text" name="club_A" class="form-input">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Type d'arc *</label>
@@ -101,6 +99,10 @@ export async function render() {
                                     <input type="text" name="license_C" class="form-input" required>
                                 </div>
                                 <div class="form-group">
+                                    <label class="form-label">Club</label>
+                                    <input type="text" name="club_C" class="form-input">
+                                </div>
+                                <div class="form-group">
                                     <label class="form-label">Type d'arc *</label>
                                     <select name="weapon_C" class="form-select" required>
                                         <option value="">Sélectionner...</option>
@@ -136,6 +138,10 @@ export async function render() {
                                     <input type="text" name="license_B" class="form-input" required>
                                 </div>
                                 <div class="form-group">
+                                    <label class="form-label">Club</label>
+                                    <input type="text" name="club_B" class="form-input">
+                                </div>
+                                <div class="form-group">
                                     <label class="form-label">Type d'arc *</label>
                                     <select name="weapon_B" class="form-select" required>
                                         <option value="">Sélectionner...</option>
@@ -169,6 +175,10 @@ export async function render() {
                                 <div class="form-group">
                                     <label class="form-label">Licence *</label>
                                     <input type="text" name="license_D" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Club</label>
+                                    <input type="text" name="club_D" class="form-input">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Type d'arc *</label>
@@ -286,7 +296,6 @@ async function handleSubmit(e) {
     const formData = new FormData(form);
     const seriesNumber = parseInt(formData.get('seriesNumber'));
     const targetNumber = parseInt(formData.get('targetNumber'));
-    const club = formData.get('club') || '';
 
     try {
         // Find or create series
@@ -305,7 +314,7 @@ async function handleSubmit(e) {
             series = await db.get('series', seriesId);
         }
 
-        // Create 4 archers (A, C, B, D)
+        // Create 4 archers (A, C, B, D) with individual club values
         const positions = ['A', 'C', 'B', 'D'];
         const addedArchers = [];
         
@@ -316,7 +325,7 @@ async function handleSubmit(e) {
                 license: formData.get(`license_${position}`),
                 category: formData.get(`category_${position}`),
                 weapon: formData.get(`weapon_${position}`),
-                club: club,
+                club: formData.get(`club_${position}`) || '',
                 seriesId: series.id,
                 targetNumber: targetNumber,
                 position: position
