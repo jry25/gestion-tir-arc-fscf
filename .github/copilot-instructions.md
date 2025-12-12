@@ -6,17 +6,17 @@
 - Main features: archer management, shooting range setup, result entry, data export (CSV/JSON), and PWA installability.
 
 ## Architecture & Key Components
-- **Entry Point:** `js/app.js` initializes the app, database, service worker, routes, and event listeners.
-- **Database:** `js/db.js` manages IndexedDB. Key stores: `archers`, `categories`, `shootingRanges`, `results`, and `series`.
-- **Routing:** `js/router.js` implements a hash-based SPA router. Pages are in `js/pages/` (e.g., `archers.js`, `results.js`).
+- **Entry Point:** `pwa/js/app.js` initializes the app, database, service worker, routes, and event listeners.
+- **Database:** `pwa/js/db.js` manages IndexedDB. Key stores: `archers`, `categories`, `shootingRanges`, `results`, and `series`.
+- **Routing:** `pwa/js/router.js` implements a hash-based SPA router. Pages are in `pwa/js/pages/` (e.g., `archers.js`, `results.js`).
 - **UI:** Main HTML in `index.html`. Navigation uses hash routes (e.g., `#archers`).
-- **Utilities:** `js/utils.js` provides helpers (toasts, loading overlays, date formatting, online status).
-- **Service Worker:** `service-worker.js` caches all static assets and enables offline mode. It auto-detects its base path for GitHub Pages compatibility.
-- **PWA Manifest & Icons:** `manifest.json` and `icons/` for installability and platform integration.
+- **Utilities:** `pwa/js/utils.js` provides helpers (toasts, loading overlays, date formatting, online status).
+- **Service Worker:** `pwa/service-worker.js` caches all static assets and enables offline mode. It auto-detects its base path for GitHub Pages compatibility.
+- **PWA Manifest & Icons:** `pwa/manifest.json` and `pwa/icons/` for installability and platform integration.
 
 ## Developer Workflows
 - **Local Development:**
-  - Serve with any static HTTP server (e.g., `python -m http.server 8000` or `npx http-server -p 8000`).
+  - Serve with any static HTTP server (e.g., `python -m http.server 8000 -d pwa` or `npx http-server -p 8000`).
   - Open `http://localhost:8000` in a browser.
 - **Deployment:**
   - Pushed to `main` branch triggers GitHub Actions workflow for GitHub Pages deployment.
@@ -27,25 +27,25 @@
 ## Project-Specific Conventions
 - **Relative Paths:** All asset and script paths are relative (`./`) for GitHub Pages compatibility.
 - **SPA Navigation:** Uses hash-based routing (`#archers`, `#results`, etc.).
-- **IndexedDB Schema:** See `js/db.js` for object store structure and upgrade logic.
-- **Toast Notifications:** Use `showToast()` from `js/utils.js` for user feedback.
-- **Page Modules:** Each page (archers, results, etc.) is a module in `js/pages/` and registered in `app.js`.
+- **IndexedDB Schema:** See `pwa/js/db.js` for object store structure and upgrade logic.
+- **Toast Notifications:** Use `showToast()` from `pwa/js/utils.js` for user feedback.
+- **Page Modules:** Each page (archers, results, etc.) is a module in `pwa/js/pages/` and registered in `app.js`.
 - **No Frameworks:** Pure JavaScript, no React/Vue/Angular.
 
 ## Integration Points
-- **Service Worker:** Handles caching, offline, and updates. See `service-worker.js` for asset list and cache versioning.
-- **Export:** Data export logic in `js/pages/export.js`.
-- **Icons:** Scripts in `icons/` for generating icon sets.
+- **Service Worker:** Handles caching, offline, and updates. See `pwa/service-worker.js` for asset list and cache versioning.
+- **Export:** Data export logic in `pwa/js/pages/export.js`.
+- **Icons:** Scripts in `pwa/icons/` for generating icon sets.
 
 ## Key Files & Directories
-- `index.html` — Main HTML shell
-- `js/app.js` — App bootstrap and main logic
-- `js/db.js` — IndexedDB management
-- `js/router.js` — SPA routing
-- `js/pages/` — Page modules (archers, results, etc.)
-- `js/utils.js` — Utility functions
-- `service-worker.js` — PWA offline support
-- `manifest.json`, `icons/` — PWA metadata and icons
+- `pwa/index.html` — Main HTML shell
+- `pwa/js/app.js` — App bootstrap and main logic
+- `pwa/js/db.js` — IndexedDB management
+- `pwa/js/router.js` — SPA routing
+- `pwa/js/pages/` — Page modules (archers, results, etc.)
+- `pwa/js/utils.js` — Utility functions
+- `pwa/service-worker.js` — PWA offline support
+- `pwa/manifest.json`, `icons/` — PWA metadata and icons
 
 ## Notable Patterns
 - **All navigation and page rendering is handled client-side.**

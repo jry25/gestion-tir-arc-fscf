@@ -7,10 +7,10 @@
 ```bash
 # Avec Python 3
 cd /home/runner/work/gestion-tir-arc-fscf/gestion-tir-arc-fscf
-python3 -m http.server 8000
+python -m http.server 8000 -d pwa
 
 # Ou avec Node.js
-npx http-server -p 8000
+npx http-server pwa -p 8000
 ```
 
 Ouvrir http://localhost:8000 dans votre navigateur.

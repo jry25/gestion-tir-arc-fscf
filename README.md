@@ -35,13 +35,13 @@ L'application est déployée automatiquement sur GitHub Pages à chaque push sur
 
 ```bash
 # Avec Python 3
-python -m http.server 8000
+python -m http.server 8000 -d pwa
 
 # Avec Node.js (http-server)
-npx http-server -p 8000
+npx http-server pwa -p 8000
 
 # Avec PHP
-php -S localhost:8000
+php -S localhost:8000 -t pwa
 ```
 
 Puis ouvrez http://localhost:8000 dans votre navigateur.
@@ -68,7 +68,7 @@ Le déploiement sur GitHub Pages est automatique via GitHub Actions :
 ### Structure du projet
 
 ```
-gestion-tir-arc-fscf/
+gestion-tir-arc-fscf/pwa
 ├── index.html              # Page principale
 ├── manifest.json           # Manifest PWA
 ├── service-worker.js       # Service Worker pour fonctionnement hors-ligne
@@ -217,11 +217,11 @@ gestion-tir-arc-fscf/
 
 ### Structure du code
 
-- **app.js** : Initialisation de l'application, enregistrement du Service Worker
-- **db.js** : Gestion IndexedDB avec méthodes CRUD génériques
-- **router.js** : Routeur simple pour navigation SPA
-- **utils.js** : Fonctions utilitaires (toast, validation, export, etc.)
-- **pages/*.js** : Modules de pages avec logique métier isolée
+- **pwa/app.js** : Initialisation de l'application, enregistrement du Service Worker
+- **pwa/db.js** : Gestion IndexedDB avec méthodes CRUD génériques
+- **pwa/router.js** : Routeur simple pour navigation SPA
+- **pwa/utils.js** : Fonctions utilitaires (toast, validation, export, etc.)
+- **pwa/pages/*.js** : Modules de pages avec logique métier isolée
 
 ### Conventions
 
