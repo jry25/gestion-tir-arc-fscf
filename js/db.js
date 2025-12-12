@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'TirArcFSCF';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 /**
  * Database Schema
@@ -53,7 +53,19 @@ class Database {
                     archersStore.createIndex('license', 'license', { unique: true });
                     archersStore.createIndex('name', 'name', { unique: false });
                     archersStore.createIndex('category', 'category', { unique: false });
+                    archersStore.createIndex('seriesId', 'seriesId', { unique: false });
                     console.log('Created archers store');
+                }
+
+                // Create Series store (new)
+                if (!db.objectStoreNames.contains('series')) {
+                    const seriesStore = db.createObjectStore('series', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    seriesStore.createIndex('number', 'number', { unique: false });
+                    seriesStore.createIndex('rangeId', 'rangeId', { unique: false });
+                    console.log('Created series store');
                 }
 
                 // Create Categories store
@@ -103,20 +115,37 @@ class Database {
      */
     _addDefaultCategories(store) {
         const defaultCategories = [
-            // Age categories
-            { code: 'POU', name: 'Poussins', type: 'age', minAge: 7, maxAge: 9 },
-            { code: 'BEN', name: 'Benjamins', type: 'age', minAge: 10, maxAge: 11 },
-            { code: 'MIN', name: 'Minimes', type: 'age', minAge: 12, maxAge: 13 },
-            { code: 'CAD', name: 'Cadets', type: 'age', minAge: 14, maxAge: 15 },
-            { code: 'JUN', name: 'Juniors', type: 'age', minAge: 16, maxAge: 17 },
-            { code: 'SEN', name: 'Seniors', type: 'age', minAge: 18, maxAge: 49 },
-            { code: 'VET', name: 'Vétérans', type: 'age', minAge: 50, maxAge: 999 },
+            // Championnat Jeune - Categories individuelles
+            { code: 'BF', name: 'Benjamine', type: 'jeune', gender: 'F', minAge: 0, maxAge: 12 },
+            { code: 'BH', name: 'Benjamin', type: 'jeune', gender: 'H', minAge: 0, maxAge: 12 },
+            { code: 'MF', name: 'Minime fille', type: 'jeune', gender: 'F', minAge: 13, maxAge: 14 },
+            { code: 'MH', name: 'Minime garçon', type: 'jeune', gender: 'H', minAge: 13, maxAge: 14 },
+            { code: 'CF', name: 'Cadette', type: 'jeune', gender: 'F', minAge: 15, maxAge: 17 },
+            { code: 'CH', name: 'Cadet', type: 'jeune', gender: 'H', minAge: 15, maxAge: 17 },
             
-            // Weapon types
-            { code: 'CL', name: 'Arc Classique', type: 'weapon' },
-            { code: 'CO', name: 'Arc à Poulies', type: 'weapon' },
-            { code: 'BB', name: 'Bare Bow', type: 'weapon' },
-            { code: 'AD', name: 'Arc Droit', type: 'weapon' }
+            // Championnat Adulte - Junior
+            { code: 'JFCL', name: 'Junior femme arc classique', type: 'adulte', gender: 'F', weapon: 'CL', minAge: 18, maxAge: 20 },
+            { code: 'JFAP', name: 'Junior femme arc à poulie', type: 'adulte', gender: 'F', weapon: 'CO', minAge: 18, maxAge: 20 },
+            { code: 'JHCL', name: 'Junior homme arc classique', type: 'adulte', gender: 'H', weapon: 'CL', minAge: 18, maxAge: 20 },
+            { code: 'JHAP', name: 'Junior homme arc à poulie', type: 'adulte', gender: 'H', weapon: 'CO', minAge: 18, maxAge: 20 },
+            
+            // Championnat Adulte - Senior
+            { code: 'SFCL', name: 'Senior femme arc classique', type: 'adulte', gender: 'F', weapon: 'CL', minAge: 21, maxAge: 50 },
+            { code: 'SFAP', name: 'Senior femme arc à poulie', type: 'adulte', gender: 'F', weapon: 'CO', minAge: 21, maxAge: 50 },
+            { code: 'SHCL', name: 'Senior homme arc classique', type: 'adulte', gender: 'H', weapon: 'CL', minAge: 21, maxAge: 50 },
+            { code: 'SHAP', name: 'Senior homme arc à poulie', type: 'adulte', gender: 'H', weapon: 'CO', minAge: 21, maxAge: 50 },
+            
+            // Championnat Adulte - Vétéran
+            { code: 'VFCL', name: 'Vétéran femme arc classique', type: 'adulte', gender: 'F', weapon: 'CL', minAge: 51, maxAge: 65 },
+            { code: 'VFAP', name: 'Vétéran femme arc à poulie', type: 'adulte', gender: 'F', weapon: 'CO', minAge: 51, maxAge: 65 },
+            { code: 'VHCL', name: 'Vétéran homme arc classique', type: 'adulte', gender: 'H', weapon: 'CL', minAge: 51, maxAge: 65 },
+            { code: 'VHAP', name: 'Vétéran homme arc à poulie', type: 'adulte', gender: 'H', weapon: 'CO', minAge: 51, maxAge: 65 },
+            
+            // Championnat Adulte - Super Vétéran
+            { code: 'SVFCL', name: 'Super vétéran femme arc classique', type: 'adulte', gender: 'F', weapon: 'CL', minAge: 66, maxAge: 999 },
+            { code: 'SVFAP', name: 'Super vétéran femme arc à poulie', type: 'adulte', gender: 'F', weapon: 'CO', minAge: 66, maxAge: 999 },
+            { code: 'SVHCL', name: 'Super vétéran homme arc classique', type: 'adulte', gender: 'H', weapon: 'CL', minAge: 66, maxAge: 999 },
+            { code: 'SVHAP', name: 'Super vétéran homme arc à poulie', type: 'adulte', gender: 'H', weapon: 'CO', minAge: 66, maxAge: 999 }
         ];
 
         defaultCategories.forEach(category => {
@@ -264,9 +293,27 @@ class Database {
             category: archer.category,
             weapon: archer.weapon,
             club: archer.club || '',
+            seriesId: archer.seriesId || null,
+            targetNumber: archer.targetNumber || null,
+            position: archer.position || null, // A, B, C, or D
             createdAt: new Date().toISOString()
         };
         return this.add('archers', archerData);
+    }
+
+    /**
+     * Add a series
+     * @param {Object} series - Series data
+     * @returns {Promise<number>}
+     */
+    async addSeries(series) {
+        const seriesData = {
+            number: series.number,
+            rangeId: series.rangeId || null,
+            numberOfTargets: series.numberOfTargets || 0,
+            createdAt: new Date().toISOString()
+        };
+        return this.add('series', seriesData);
     }
 
     /**

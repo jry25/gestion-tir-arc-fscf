@@ -11,6 +11,9 @@ import { showToast, validateForm, clearForm, formatDate } from '../utils.js';
 export async function render() {
     const container = document.getElementById('page-content');
     
+    // Get series for dropdown
+    const series = await db.getAll('series');
+    
     container.innerHTML = `
         <div class="card">
             <div class="card-header">
@@ -45,17 +48,8 @@ export async function render() {
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Catégorie *</label>
-                                <select name="category" class="form-select" required>
-                                    <option value="">Sélectionner...</option>
-                                    <option value="POU">Poussins</option>
-                                    <option value="BEN">Benjamins</option>
-                                    <option value="MIN">Minimes</option>
-                                    <option value="CAD">Cadets</option>
-                                    <option value="JUN">Juniors</option>
-                                    <option value="SEN">Seniors</option>
-                                    <option value="VET">Vétérans</option>
-                                </select>
+                                <label class="form-label">Club</label>
+                                <input type="text" name="club" class="form-input">
                             </div>
 
                             <div class="form-group">
@@ -70,8 +64,66 @@ export async function render() {
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Club</label>
-                                <input type="text" name="club" class="form-input">
+                                <label class="form-label">Catégorie *</label>
+                                <select name="category" class="form-select" id="category-select" required>
+                                    <option value="">Sélectionner...</option>
+                                    <optgroup label="Championnat Jeune">
+                                        <option value="BF">Benjamine</option>
+                                        <option value="BH">Benjamin</option>
+                                        <option value="MF">Minime fille</option>
+                                        <option value="MH">Minime garçon</option>
+                                        <option value="CF">Cadette</option>
+                                        <option value="CH">Cadet</option>
+                                    </optgroup>
+                                    <optgroup label="Championnat Adulte - Junior">
+                                        <option value="JFCL">Junior femme arc classique</option>
+                                        <option value="JFAP">Junior femme arc à poulie</option>
+                                        <option value="JHCL">Junior homme arc classique</option>
+                                        <option value="JHAP">Junior homme arc à poulie</option>
+                                    </optgroup>
+                                    <optgroup label="Championnat Adulte - Senior">
+                                        <option value="SFCL">Senior femme arc classique</option>
+                                        <option value="SFAP">Senior femme arc à poulie</option>
+                                        <option value="SHCL">Senior homme arc classique</option>
+                                        <option value="SHAP">Senior homme arc à poulie</option>
+                                    </optgroup>
+                                    <optgroup label="Championnat Adulte - Vétéran">
+                                        <option value="VFCL">Vétéran femme arc classique</option>
+                                        <option value="VFAP">Vétéran femme arc à poulie</option>
+                                        <option value="VHCL">Vétéran homme arc classique</option>
+                                        <option value="VHAP">Vétéran homme arc à poulie</option>
+                                    </optgroup>
+                                    <optgroup label="Championnat Adulte - Super Vétéran">
+                                        <option value="SVFCL">Super vétéran femme arc classique</option>
+                                        <option value="SVFAP">Super vétéran femme arc à poulie</option>
+                                        <option value="SVHCL">Super vétéran homme arc classique</option>
+                                        <option value="SVHAP">Super vétéran homme arc à poulie</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Série</label>
+                                <select name="seriesId" class="form-select" id="series-select">
+                                    <option value="">Aucune série</option>
+                                    ${series.map(s => `<option value="${s.id}">Série ${s.number}</option>`).join('')}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Numéro de cible</label>
+                                <input type="number" name="targetNumber" class="form-input" min="1">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Position</label>
+                                <select name="position" class="form-select">
+                                    <option value="">Non assigné</option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                </select>
                             </div>
                         </div>
 
@@ -135,7 +187,10 @@ async function handleSubmit(e) {
         license: formData.get('license'),
         category: formData.get('category'),
         weapon: formData.get('weapon'),
-        club: formData.get('club')
+        club: formData.get('club'),
+        seriesId: formData.get('seriesId') ? parseInt(formData.get('seriesId')) : null,
+        targetNumber: formData.get('targetNumber') ? parseInt(formData.get('targetNumber')) : null,
+        position: formData.get('position') || null
     };
 
     try {
@@ -157,39 +212,50 @@ async function loadArchers() {
     
     try {
         const archers = await db.getAll('archers');
+        const allSeries = await db.getAll('series');
         
         if (archers.length === 0) {
             container.innerHTML = '<p class="text-center">Aucun archer enregistré</p>';
             return;
         }
 
+        // Create series map for lookup
+        const seriesMap = new Map(allSeries.map(s => [s.id, s]));
+
         container.innerHTML = `
             <table class="table">
                 <thead>
                     <tr>
+                        <th>Série</th>
+                        <th>Cible</th>
+                        <th>Pos.</th>
                         <th>Nom</th>
                         <th>Prénom</th>
-                        <th>Licence</th>
-                        <th>Catégorie</th>
-                        <th>Arc</th>
                         <th>Club</th>
+                        <th>Arc</th>
+                        <th>Catégorie</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${archers.map(archer => `
-                        <tr>
-                            <td>${archer.name}</td>
-                            <td>${archer.firstName}</td>
-                            <td>${archer.license}</td>
-                            <td>${getCategoryName(archer.category)}</td>
-                            <td>${getWeaponName(archer.weapon)}</td>
-                            <td>${archer.club || '-'}</td>
-                            <td>
-                                <button class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick="window.deleteArcher(${archer.id})">🗑️</button>
-                            </td>
-                        </tr>
-                    `).join('')}
+                    ${archers.map(archer => {
+                        const series = archer.seriesId ? seriesMap.get(archer.seriesId) : null;
+                        return `
+                            <tr>
+                                <td>${series ? `Série ${series.number}` : '-'}</td>
+                                <td>${archer.targetNumber || '-'}</td>
+                                <td>${archer.position || '-'}</td>
+                                <td>${archer.name}</td>
+                                <td>${archer.firstName}</td>
+                                <td>${archer.club || '-'}</td>
+                                <td>${getWeaponName(archer.weapon)}</td>
+                                <td>${getCategoryName(archer.category)}</td>
+                                <td>
+                                    <button class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick="window.deleteArcher(${archer.id})">🗑️</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
                 </tbody>
             </table>
         `;
@@ -235,13 +301,33 @@ function handleSearch(e) {
  */
 function getCategoryName(code) {
     const categories = {
-        'POU': 'Poussins',
-        'BEN': 'Benjamins',
-        'MIN': 'Minimes',
-        'CAD': 'Cadets',
-        'JUN': 'Juniors',
-        'SEN': 'Seniors',
-        'VET': 'Vétérans'
+        // Championnat Jeune
+        'BF': 'Benjamine',
+        'BH': 'Benjamin',
+        'MF': 'Minime fille',
+        'MH': 'Minime garçon',
+        'CF': 'Cadette',
+        'CH': 'Cadet',
+        // Championnat Adulte - Junior
+        'JFCL': 'Junior femme arc classique',
+        'JFAP': 'Junior femme arc à poulie',
+        'JHCL': 'Junior homme arc classique',
+        'JHAP': 'Junior homme arc à poulie',
+        // Championnat Adulte - Senior
+        'SFCL': 'Senior femme arc classique',
+        'SFAP': 'Senior femme arc à poulie',
+        'SHCL': 'Senior homme arc classique',
+        'SHAP': 'Senior homme arc à poulie',
+        // Championnat Adulte - Vétéran
+        'VFCL': 'Vétéran femme arc classique',
+        'VFAP': 'Vétéran femme arc à poulie',
+        'VHCL': 'Vétéran homme arc classique',
+        'VHAP': 'Vétéran homme arc à poulie',
+        // Championnat Adulte - Super Vétéran
+        'SVFCL': 'Super vétéran femme arc classique',
+        'SVFAP': 'Super vétéran femme arc à poulie',
+        'SVHCL': 'Super vétéran homme arc classique',
+        'SVHAP': 'Super vétéran homme arc à poulie'
     };
     return categories[code] || code;
 }
