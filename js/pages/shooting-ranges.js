@@ -297,8 +297,8 @@ function printSeries(series, allArchers) {
         </head>
         <body>
             <div class="header-info">
-                <h1>🏹 Série ${series.number} - Pas de Tir FSCF</h1>
-                <p><strong>Nombre de cibles:</strong> ${series.numberOfTargets} | <strong>Date:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
+                <h1 contenteditable>🏹 Série ${series.number} - Pas de Tir FSCF</h1>
+                <p contenteditable><strong>Nombre de cibles:</strong> ${series.numberOfTargets} | <strong>Date:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
             </div>
             
             <table>
