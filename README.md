@@ -18,6 +18,12 @@ Application Progressive Web App (PWA) pour la gestion de compétitions de tir à
 
 ## 🚀 Installation
 
+### Accès en ligne (GitHub Pages)
+
+L'application est déployée automatiquement sur GitHub Pages à chaque push sur la branche `main`.
+
+**URL de l'application** : [https://jry25.github.io/gestion-tir-arc-fscf/](https://jry25.github.io/gestion-tir-arc-fscf/)
+
 ### Installation comme application (PWA)
 
 1. Ouvrez l'application dans votre navigateur
@@ -39,6 +45,23 @@ php -S localhost:8000
 ```
 
 Puis ouvrez http://localhost:8000 dans votre navigateur.
+
+## 📦 Déploiement
+
+### GitHub Pages (Automatique)
+
+Le déploiement sur GitHub Pages est automatique via GitHub Actions :
+
+1. Chaque push sur la branche `main` déclenche le workflow de déploiement
+2. Le workflow configure GitHub Pages et déploie les fichiers statiques
+3. L'application est accessible à l'URL : `https://jry25.github.io/gestion-tir-arc-fscf/`
+
+**Configuration requise** (une seule fois) :
+1. Aller dans les paramètres du repository (`Settings` > `Pages`)
+2. Sous "Source", sélectionner "GitHub Actions"
+3. Le workflow `.github/workflows/deploy.yml` gérera automatiquement le déploiement
+
+**Note** : Le fichier `.nojekyll` est présent pour éviter le traitement Jekyll par GitHub Pages.
 
 ## 🏗️ Architecture
 
