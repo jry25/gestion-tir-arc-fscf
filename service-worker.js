@@ -6,22 +6,25 @@
 const CACHE_VERSION = 'v1.0.0';
 const CACHE_NAME = `tir-arc-fscf-${CACHE_VERSION}`;
 
+// Get base path from service worker location
+const BASE_PATH = self.location.pathname.substring(0, self.location.pathname.lastIndexOf('/') + 1);
+
 // Files to cache for offline use
 const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/manifest.json',
-    '/css/styles.css',
-    '/js/app.js',
-    '/js/db.js',
-    '/js/router.js',
-    '/js/utils.js',
-    '/js/pages/archers.js',
-    '/js/pages/shooting-ranges.js',
-    '/js/pages/results.js',
-    '/js/pages/export.js',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png'
+    `${BASE_PATH}`,
+    `${BASE_PATH}index.html`,
+    `${BASE_PATH}manifest.json`,
+    `${BASE_PATH}css/styles.css`,
+    `${BASE_PATH}js/app.js`,
+    `${BASE_PATH}js/db.js`,
+    `${BASE_PATH}js/router.js`,
+    `${BASE_PATH}js/utils.js`,
+    `${BASE_PATH}js/pages/archers.js`,
+    `${BASE_PATH}js/pages/shooting-ranges.js`,
+    `${BASE_PATH}js/pages/results.js`,
+    `${BASE_PATH}js/pages/export.js`,
+    `${BASE_PATH}icons/icon-192x192.png`,
+    `${BASE_PATH}icons/icon-512x512.png`
 ];
 
 /**
@@ -168,8 +171,8 @@ self.addEventListener('push', (event) => {
     
     const options = {
         body: body,
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
+        icon: `${BASE_PATH}icons/icon-192x192.png`,
+        badge: `${BASE_PATH}icons/icon-72x72.png`,
         vibrate: [200, 100, 200]
     };
     
