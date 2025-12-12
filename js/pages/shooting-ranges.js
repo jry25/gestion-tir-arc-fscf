@@ -3,7 +3,7 @@
  */
 
 import db from '../db.js';
-import { showToast, validateForm, clearForm } from '../utils.js';
+import { showToast, validateForm, clearForm, getCategoryName, getWeaponName } from '../utils.js';
 
 /**
  * Render the shooting ranges page
@@ -379,23 +379,3 @@ window.deleteSeries = async function(id) {
         showToast('Erreur lors de la suppression', 'error');
     }
 };
-
-/**
- * Helper functions for print
- */
-function getCategoryName(code) {
-    const categories = {
-        'BF': 'Benjamine', 'BH': 'Benjamin', 'MF': 'Minime fille', 'MH': 'Minime garçon',
-        'CF': 'Cadette', 'CH': 'Cadet', 'JFCL': 'Junior F CL', 'JFAP': 'Junior F AP',
-        'JHCL': 'Junior H CL', 'JHAP': 'Junior H AP', 'SFCL': 'Senior F CL', 'SFAP': 'Senior F AP',
-        'SHCL': 'Senior H CL', 'SHAP': 'Senior H AP', 'VFCL': 'Vétéran F CL', 'VFAP': 'Vétéran F AP',
-        'VHCL': 'Vétéran H CL', 'VHAP': 'Vétéran H AP', 'SVFCL': 'Super vét. F CL',
-        'SVFAP': 'Super vét. F AP', 'SVHCL': 'Super vét. H CL', 'SVHAP': 'Super vét. H AP'
-    };
-    return categories[code] || code;
-}
-
-function getWeaponName(code) {
-    const weapons = { 'CL': 'Arc Classique', 'CO': 'Arc à Poulies', 'BB': 'Bare Bow', 'AD': 'Arc Droit' };
-    return weapons[code] || code;
-}

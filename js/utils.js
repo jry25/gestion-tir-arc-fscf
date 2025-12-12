@@ -231,3 +231,56 @@ export function exportToCSV(data, filename) {
     
     downloadFile(csv, filename, 'text/csv');
 }
+
+/**
+ * Get FSCF category name from code
+ * @param {string} code - Category code
+ * @returns {string}
+ */
+export function getCategoryName(code) {
+    const categories = {
+        // Championnat Jeune
+        'BF': 'Benjamine',
+        'BH': 'Benjamin',
+        'MF': 'Minime fille',
+        'MH': 'Minime garçon',
+        'CF': 'Cadette',
+        'CH': 'Cadet',
+        // Championnat Adulte - Junior
+        'JFCL': 'Junior femme arc classique',
+        'JFAP': 'Junior femme arc à poulie',
+        'JHCL': 'Junior homme arc classique',
+        'JHAP': 'Junior homme arc à poulie',
+        // Championnat Adulte - Senior
+        'SFCL': 'Senior femme arc classique',
+        'SFAP': 'Senior femme arc à poulie',
+        'SHCL': 'Senior homme arc classique',
+        'SHAP': 'Senior homme arc à poulie',
+        // Championnat Adulte - Vétéran
+        'VFCL': 'Vétéran femme arc classique',
+        'VFAP': 'Vétéran femme arc à poulie',
+        'VHCL': 'Vétéran homme arc classique',
+        'VHAP': 'Vétéran homme arc à poulie',
+        // Championnat Adulte - Super Vétéran
+        'SVFCL': 'Super vétéran femme arc classique',
+        'SVFAP': 'Super vétéran femme arc à poulie',
+        'SVHCL': 'Super vétéran homme arc classique',
+        'SVHAP': 'Super vétéran homme arc à poulie'
+    };
+    return categories[code] || code;
+}
+
+/**
+ * Get weapon type name from code
+ * @param {string} code - Weapon code
+ * @returns {string}
+ */
+export function getWeaponName(code) {
+    const weapons = {
+        'CL': 'Arc Classique',
+        'CO': 'Arc à Poulies',
+        'BB': 'Bare Bow',
+        'AD': 'Arc Droit'
+    };
+    return weapons[code] || code;
+}
