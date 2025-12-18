@@ -309,13 +309,16 @@ async function handleSubmit(e) {
         const license = formData.get(`license_${position}`);
         const category = formData.get(`category_${position}`);
         const weapon = formData.get(`weapon_${position}`);
+
+        const requiredFields = [name, firstName, license, category, weapon];
         
         // Check if any field for this position is filled (treating empty strings as no data)
-        const hasData = (name && name.trim()) || (firstName && firstName.trim()) || (license && license.trim()) || (category && category.trim()) || (weapon && weapon.trim());
+        const hasData = requiredFields.some(value => value && value.trim());
         
         if (hasData) {
             // Validate that all required fields for this archer are filled
-            if (!name || !name.trim() || !firstName || !firstName.trim() || !license || !license.trim() || !category || !category.trim() || !weapon || !weapon.trim()) {
+            const allRequiredFilled = requiredFields.every(value => value && value.trim());
+            if (!allRequiredFilled) {
                 showToast(`Position ${position} : Veuillez remplir tous les champs (nom, prénom, licence, catégorie, type d'arc) ou laisser tous vides`, 'error');
                 return;
             }
@@ -324,8 +327,8 @@ async function handleSubmit(e) {
                 name: name.trim(),
                 firstName: firstName.trim(),
                 license: license.trim(),
-                category,
-                weapon,
+                category: category.trim(),
+                weapon: weapon.trim(),
                 club: formData.get(`club_${position}`) || '',
                 position
             });
