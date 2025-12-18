@@ -284,11 +284,11 @@ function hideArcherForm() {
 
 /**
  * Check if a field value is non-empty (after trimming whitespace)
- * @param {string|null} value - The field value to check
+ * @param {string|null|undefined} value - The field value to check
  * @returns {boolean} - True if the value is non-empty after trimming
  */
 function isNonEmptyField(value) {
-    return value && value.trim();
+    return !!(value && value.trim());
 }
 
 /**
