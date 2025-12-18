@@ -283,6 +283,15 @@ function hideArcherForm() {
 }
 
 /**
+ * Check if a field value is non-empty (after trimming whitespace)
+ * @param {string|null} value - The field value to check
+ * @returns {boolean} - True if the value is non-empty after trimming
+ */
+function isNonEmptyField(value) {
+    return value && value.trim();
+}
+
+/**
  * Handle form submission - Add 1 to 4 archers
  */
 async function handleSubmit(e) {
@@ -313,11 +322,11 @@ async function handleSubmit(e) {
         const requiredFields = [name, firstName, license, category, weapon];
         
         // Check if any field for this position is filled (treating empty strings as no data)
-        const hasData = requiredFields.some(value => value && value.trim());
+        const hasData = requiredFields.some(isNonEmptyField);
         
         if (hasData) {
             // Validate that all required fields for this archer are filled
-            const allRequiredFilled = requiredFields.every(value => value && value.trim());
+            const allRequiredFilled = requiredFields.every(isNonEmptyField);
             if (!allRequiredFilled) {
                 showToast(`Position ${position} : Veuillez remplir tous les champs (nom, prénom, licence, catégorie, type d'arc) ou laisser tous vides`, 'error');
                 return;
