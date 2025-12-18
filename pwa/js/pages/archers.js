@@ -3,7 +3,7 @@
  */
 
 import db from '../db.js';
-import { showToast, validateForm, clearForm, formatDate, getCategoryName, getWeaponName } from '../utils.js';
+import { showToast, clearForm, formatDate, getCategoryName, getWeaponName } from '../utils.js';
 
 /**
  * Render the archers page
@@ -294,7 +294,7 @@ async function handleSubmit(e) {
     const targetNumber = parseInt(formData.get('targetNumber'));
 
     // Validate series and target numbers
-    if (!seriesNumber || !targetNumber) {
+    if (isNaN(seriesNumber) || seriesNumber < 1 || isNaN(targetNumber) || targetNumber < 1) {
         showToast('Veuillez remplir le numéro de série et de cible', 'error');
         return;
     }
@@ -310,12 +310,12 @@ async function handleSubmit(e) {
         const category = formData.get(`category_${position}`);
         const weapon = formData.get(`weapon_${position}`);
         
-        // Check if any field for this position is filled
-        const hasData = name || firstName || license || category || weapon;
+        // Check if any field for this position is filled (treating empty strings as no data)
+        const hasData = (name && name.trim()) || (firstName && firstName.trim()) || (license && license.trim()) || (category && category.trim()) || (weapon && weapon.trim());
         
         if (hasData) {
             // Validate that all required fields for this archer are filled
-            if (!name || !firstName || !license || !category || !weapon) {
+            if (!name || !name.trim() || !firstName || !firstName.trim() || !license || !license.trim() || !category || !category.trim() || !weapon || !weapon.trim()) {
                 showToast(`Position ${position} : Veuillez remplir tous les champs (nom, prénom, licence, catégorie, type d'arc) ou laisser tous vides`, 'error');
                 return;
             }
