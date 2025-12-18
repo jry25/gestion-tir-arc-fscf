@@ -21,7 +21,7 @@ export async function render() {
             </div>
             <div class="card-body">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <button id="add-archer-btn" class="btn btn-primary">➕ Ajouter 4 archers (binôme)</button>
+                    <button id="add-archer-btn" class="btn btn-primary">➕ Ajouter des archers (1 à 4)</button>
                     <div>
                         <input type="text" id="search-archer" class="form-input" placeholder="Rechercher un archer..." style="width: 300px;">
                     </div>
@@ -29,7 +29,8 @@ export async function render() {
 
                 <div id="archer-form-container" class="hidden">
                     <form id="archer-form" class="mb-3" style="background: var(--light-bg); padding: 1.5rem; border-radius: 4px;">
-                        <h3 class="mb-2">Ajouter 4 Archers (Binôme complet)</h3>
+                        <h3 class="mb-2">Ajouter des Archers (1 à 4 par cible)</h3>
+                        <p style="color: var(--light-text); margin-bottom: 1rem;">Remplissez au moins 1 archer. Les positions vides seront ignorées.</p>
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                             <div class="form-group">
@@ -48,24 +49,24 @@ export async function render() {
                             <h4 style="margin-bottom: 1rem;">Position A</h4>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                                 <div class="form-group">
-                                    <label class="form-label">Nom *</label>
-                                    <input type="text" name="name_A" class="form-input" required>
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" name="name_A" class="form-input archer-field" data-position="A">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Prénom *</label>
-                                    <input type="text" name="firstName_A" class="form-input" required>
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" name="firstName_A" class="form-input archer-field" data-position="A">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Licence *</label>
-                                    <input type="text" name="license_A" class="form-input" required>
+                                    <label class="form-label">Licence</label>
+                                    <input type="text" name="license_A" class="form-input archer-field" data-position="A">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Club</label>
-                                    <input type="text" name="club_A" class="form-input">
+                                    <input type="text" name="club_A" class="form-input archer-field" data-position="A">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Type d'arc *</label>
-                                    <select name="weapon_A" class="form-select" required>
+                                    <label class="form-label">Type d'arc</label>
+                                    <select name="weapon_A" class="form-select archer-field" data-position="A">
                                         <option value="">Sélectionner...</option>
                                         <option value="CL">Arc Classique</option>
                                         <option value="CO">Arc à Poulies</option>
@@ -74,8 +75,8 @@ export async function render() {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Catégorie *</label>
-                                    <select name="category_A" class="form-select category-select" required>
+                                    <label class="form-label">Catégorie</label>
+                                    <select name="category_A" class="form-select category-select archer-field" data-position="A">
                                         <option value="">Sélectionner...</option>
                                         ${getCategoryOptions()}
                                     </select>
@@ -87,24 +88,24 @@ export async function render() {
                             <h4 style="margin-bottom: 1rem;">Position C</h4>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                                 <div class="form-group">
-                                    <label class="form-label">Nom *</label>
-                                    <input type="text" name="name_C" class="form-input" required>
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" name="name_C" class="form-input archer-field" data-position="C">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Prénom *</label>
-                                    <input type="text" name="firstName_C" class="form-input" required>
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" name="firstName_C" class="form-input archer-field" data-position="C">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Licence *</label>
-                                    <input type="text" name="license_C" class="form-input" required>
+                                    <label class="form-label">Licence</label>
+                                    <input type="text" name="license_C" class="form-input archer-field" data-position="C">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Club</label>
-                                    <input type="text" name="club_C" class="form-input">
+                                    <input type="text" name="club_C" class="form-input archer-field" data-position="C">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Type d'arc *</label>
-                                    <select name="weapon_C" class="form-select" required>
+                                    <label class="form-label">Type d'arc</label>
+                                    <select name="weapon_C" class="form-select archer-field" data-position="C">
                                         <option value="">Sélectionner...</option>
                                         <option value="CL">Arc Classique</option>
                                         <option value="CO">Arc à Poulies</option>
@@ -113,8 +114,8 @@ export async function render() {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Catégorie *</label>
-                                    <select name="category_C" class="form-select category-select" required>
+                                    <label class="form-label">Catégorie</label>
+                                    <select name="category_C" class="form-select category-select archer-field" data-position="C">
                                         <option value="">Sélectionner...</option>
                                         ${getCategoryOptions()}
                                     </select>
@@ -126,24 +127,24 @@ export async function render() {
                             <h4 style="margin-bottom: 1rem;">Position B</h4>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                                 <div class="form-group">
-                                    <label class="form-label">Nom *</label>
-                                    <input type="text" name="name_B" class="form-input" required>
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" name="name_B" class="form-input archer-field" data-position="B">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Prénom *</label>
-                                    <input type="text" name="firstName_B" class="form-input" required>
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" name="firstName_B" class="form-input archer-field" data-position="B">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Licence *</label>
-                                    <input type="text" name="license_B" class="form-input" required>
+                                    <label class="form-label">Licence</label>
+                                    <input type="text" name="license_B" class="form-input archer-field" data-position="B">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Club</label>
-                                    <input type="text" name="club_B" class="form-input">
+                                    <input type="text" name="club_B" class="form-input archer-field" data-position="B">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Type d'arc *</label>
-                                    <select name="weapon_B" class="form-select" required>
+                                    <label class="form-label">Type d'arc</label>
+                                    <select name="weapon_B" class="form-select archer-field" data-position="B">
                                         <option value="">Sélectionner...</option>
                                         <option value="CL">Arc Classique</option>
                                         <option value="CO">Arc à Poulies</option>
@@ -152,8 +153,8 @@ export async function render() {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Catégorie *</label>
-                                    <select name="category_B" class="form-select category-select" required>
+                                    <label class="form-label">Catégorie</label>
+                                    <select name="category_B" class="form-select category-select archer-field" data-position="B">
                                         <option value="">Sélectionner...</option>
                                         ${getCategoryOptions()}
                                     </select>
@@ -165,24 +166,24 @@ export async function render() {
                             <h4 style="margin-bottom: 1rem;">Position D</h4>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                                 <div class="form-group">
-                                    <label class="form-label">Nom *</label>
-                                    <input type="text" name="name_D" class="form-input" required>
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" name="name_D" class="form-input archer-field" data-position="D">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Prénom *</label>
-                                    <input type="text" name="firstName_D" class="form-input" required>
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" name="firstName_D" class="form-input archer-field" data-position="D">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Licence *</label>
-                                    <input type="text" name="license_D" class="form-input" required>
+                                    <label class="form-label">Licence</label>
+                                    <input type="text" name="license_D" class="form-input archer-field" data-position="D">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Club</label>
-                                    <input type="text" name="club_D" class="form-input">
+                                    <input type="text" name="club_D" class="form-input archer-field" data-position="D">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Type d'arc *</label>
-                                    <select name="weapon_D" class="form-select" required>
+                                    <label class="form-label">Type d'arc</label>
+                                    <select name="weapon_D" class="form-select archer-field" data-position="D">
                                         <option value="">Sélectionner...</option>
                                         <option value="CL">Arc Classique</option>
                                         <option value="CO">Arc à Poulies</option>
@@ -191,8 +192,8 @@ export async function render() {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Catégorie *</label>
-                                    <select name="category_D" class="form-select category-select" required>
+                                    <label class="form-label">Catégorie</label>
+                                    <select name="category_D" class="form-select category-select archer-field" data-position="D">
                                         <option value="">Sélectionner...</option>
                                         ${getCategoryOptions()}
                                     </select>
@@ -201,7 +202,7 @@ export async function render() {
                         </div>
 
                         <div class="mt-2">
-                            <button type="submit" class="btn btn-success">Enregistrer les 4 archers</button>
+                            <button type="submit" class="btn btn-success">Enregistrer les archers</button>
                             <button type="button" id="cancel-archer-btn" class="btn btn-secondary">Annuler</button>
                         </div>
                     </form>
@@ -282,20 +283,60 @@ function hideArcherForm() {
 }
 
 /**
- * Handle form submission - Add 4 archers (complete binôme)
+ * Handle form submission - Add 1 to 4 archers
  */
 async function handleSubmit(e) {
     e.preventDefault();
     
     const form = e.target;
-    if (!validateForm(form)) {
-        showToast('Veuillez remplir tous les champs obligatoires', 'error');
-        return;
-    }
-
     const formData = new FormData(form);
     const seriesNumber = parseInt(formData.get('seriesNumber'));
     const targetNumber = parseInt(formData.get('targetNumber'));
+
+    // Validate series and target numbers
+    if (!seriesNumber || !targetNumber) {
+        showToast('Veuillez remplir le numéro de série et de cible', 'error');
+        return;
+    }
+
+    // Check which positions have data
+    const positions = ['A', 'C', 'B', 'D'];
+    const archersToAdd = [];
+    
+    for (const position of positions) {
+        const name = formData.get(`name_${position}`);
+        const firstName = formData.get(`firstName_${position}`);
+        const license = formData.get(`license_${position}`);
+        const category = formData.get(`category_${position}`);
+        const weapon = formData.get(`weapon_${position}`);
+        
+        // Check if any field for this position is filled
+        const hasData = name || firstName || license || category || weapon;
+        
+        if (hasData) {
+            // Validate that all required fields for this archer are filled
+            if (!name || !firstName || !license || !category || !weapon) {
+                showToast(`Position ${position} : Veuillez remplir tous les champs (nom, prénom, licence, catégorie, type d'arc) ou laisser tous vides`, 'error');
+                return;
+            }
+            
+            archersToAdd.push({
+                name: name.trim(),
+                firstName: firstName.trim(),
+                license: license.trim(),
+                category,
+                weapon,
+                club: formData.get(`club_${position}`) || '',
+                position
+            });
+        }
+    }
+
+    // Validate that at least one archer is provided
+    if (archersToAdd.length === 0) {
+        showToast('Veuillez remplir au moins un archer', 'error');
+        return;
+    }
 
     try {
         // Find or create series
@@ -314,28 +355,23 @@ async function handleSubmit(e) {
             series = await db.get('series', seriesId);
         }
 
-        // Create 4 archers (A, C, B, D) with individual club values
-        const positions = ['A', 'C', 'B', 'D'];
+        // Create archers
         const addedArchers = [];
         
-        for (const position of positions) {
+        for (const archerData of archersToAdd) {
             const archer = {
-                name: formData.get(`name_${position}`),
-                firstName: formData.get(`firstName_${position}`),
-                license: formData.get(`license_${position}`),
-                category: formData.get(`category_${position}`),
-                weapon: formData.get(`weapon_${position}`),
-                club: formData.get(`club_${position}`) || '',
+                ...archerData,
                 seriesId: series.id,
-                targetNumber: targetNumber,
-                position: position
+                targetNumber: targetNumber
             };
 
             const archerId = await db.addArcher(archer);
             addedArchers.push({...archer, id: archerId});
         }
 
-        showToast(`4 archers ajoutés avec succès à la série ${seriesNumber}, cible ${targetNumber}`, 'success');
+        const archerCount = addedArchers.length;
+        const archerWord = archerCount === 1 ? 'archer ajouté' : 'archers ajoutés';
+        showToast(`${archerCount} ${archerWord} avec succès à la série ${seriesNumber}, cible ${targetNumber}`, 'success');
         hideArcherForm();
         await loadArchers();
     } catch (error) {
