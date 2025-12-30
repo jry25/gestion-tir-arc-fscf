@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.2.0...v1.2.1) (2025-12-30)
+
+
+### 🐛 Bug Fixes
+
+* regenerate PWA icons, add install screenshots, and update manifest ([#21](https://github.com/jry25/gestion-tir-arc-fscf/issues/21)) ([b7be2fa](https://github.com/jry25/gestion-tir-arc-fscf/commit/b7be2fa600b1b60ab71a4bca123cbd7a0c3fabe0))
+
 ## [1.2.0](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.1.0...v1.2.0) (2025-12-30)
 
 
