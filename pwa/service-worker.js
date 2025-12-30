@@ -3,7 +3,7 @@
  * Handles offline caching and synchronization
  */
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.1.0';
 const CACHE_NAME = `tir-arc-fscf-${CACHE_VERSION}`;
 
 // Get base path from service worker location

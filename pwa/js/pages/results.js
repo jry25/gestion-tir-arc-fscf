@@ -14,211 +14,334 @@ export async function render() {
     container.innerHTML = `
         <div class="card">
             <div class="card-header">
-                <h2>Résultats de Compétition</h2>
+                <h2>Saisie des Résultats</h2>
             </div>
             <div class="card-body">
-                <button id="add-result-btn" class="btn btn-primary mb-2">➕ Ajouter un résultat</button>
-
-                <div id="result-form-container" class="hidden">
-                    <form id="result-form" class="mb-3" style="background: var(--light-bg); padding: 1.5rem; border-radius: 4px;">
-                        <h3 class="mb-2">Nouveau Résultat</h3>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                            <div class="form-group">
-                                <label class="form-label">Archer *</label>
-                                <select name="archerId" id="archer-select" class="form-select" required>
-                                    <option value="">Sélectionner...</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Pas de tir *</label>
-                                <select name="rangeId" id="range-select" class="form-select" required>
-                                    <option value="">Sélectionner...</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Score *</label>
-                                <input type="number" name="score" class="form-input" min="0" max="600" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Date *</label>
-                                <input type="date" name="date" class="form-input" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-textarea" rows="3"></textarea>
-                        </div>
-
-                        <div class="mt-2">
-                            <button type="submit" class="btn btn-success">Enregistrer</button>
-                            <button type="button" id="cancel-result-btn" class="btn btn-secondary">Annuler</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div id="results-list">
+                <div id="results-entry">
                     <p class="text-center">Chargement...</p>
                 </div>
             </div>
         </div>
     `;
 
-    // Load results
-    await loadResults();
-
-    // Event listeners
-    document.getElementById('add-result-btn').addEventListener('click', showResultForm);
-    document.getElementById('cancel-result-btn').addEventListener('click', hideResultForm);
-    document.getElementById('result-form').addEventListener('submit', handleSubmit);
+    // Load results entry interface
+    await loadResultsEntry();
 }
 
 /**
- * Show the result form
+ * Load and display the results entry interface
  */
-async function showResultForm() {
-    // Load archers and ranges for dropdowns
-    const archers = await db.getAll('archers');
-    const ranges = await db.getAll('shootingRanges');
-    
-    const archerSelect = document.getElementById('archer-select');
-    const rangeSelect = document.getElementById('range-select');
-    
-    archerSelect.innerHTML = '<option value="">Sélectionner...</option>' +
-        archers.map(a => `<option value="${a.id}">${a.firstName} ${a.name} (${a.license})</option>`).join('');
-    
-    rangeSelect.innerHTML = '<option value="">Sélectionner...</option>' +
-        ranges.map(r => `<option value="${r.id}">${r.name} - ${r.distance}m</option>`).join('');
-    
-    // Set default date to today
-    document.querySelector('[name="date"]').valueAsDate = new Date();
-    
-    document.getElementById('result-form-container').classList.remove('hidden');
-    document.getElementById('add-result-btn').disabled = true;
-}
-
-/**
- * Hide the result form
- */
-function hideResultForm() {
-    document.getElementById('result-form-container').classList.add('hidden');
-    document.getElementById('add-result-btn').disabled = false;
-    clearForm(document.getElementById('result-form'));
-}
-
-/**
- * Handle form submission
- */
-async function handleSubmit(e) {
-    e.preventDefault();
-    
-    const form = e.target;
-    if (!validateForm(form)) {
-        showToast('Veuillez remplir tous les champs obligatoires', 'error');
-        return;
-    }
-
-    const formData = new FormData(form);
-    const result = {
-        archerId: parseInt(formData.get('archerId')),
-        rangeId: parseInt(formData.get('rangeId')),
-        score: parseInt(formData.get('score')),
-        date: new Date(formData.get('date')).toISOString(),
-        notes: formData.get('notes')
-    };
-
-    try {
-        await db.addResult(result);
-        showToast('Résultat ajouté avec succès', 'success');
-        hideResultForm();
-        await loadResults();
-    } catch (error) {
-        console.error('Error adding result:', error);
-        showToast('Erreur lors de l\'ajout du résultat', 'error');
-    }
-}
-
-/**
- * Load and display results
- */
-async function loadResults() {
-    const container = document.getElementById('results-list');
+async function loadResultsEntry() {
+    const container = document.getElementById('results-entry');
     
     try {
+        const allSeries = await db.getAll('series');
+        const archers = await db.getAll('archers');
         const results = await db.getAll('results');
         
-        if (results.length === 0) {
-            container.innerHTML = '<p class="text-center">Aucun résultat enregistré</p>';
+        if (allSeries.length === 0) {
+            container.innerHTML = '<p class="text-center">Aucune série configurée. Veuillez d\'abord créer une série dans "Pas de tir".</p>';
+            return;
+        }
+        
+        if (archers.length === 0) {
+            container.innerHTML = '<p class="text-center">Aucun archer enregistré. Veuillez d\'abord ajouter des archers.</p>';
             return;
         }
 
-        // Get archers and ranges for display
-        const archers = await db.getAll('archers');
-        const ranges = await db.getAll('shootingRanges');
-        
-        // Create lookup maps
-        const archerMap = new Map(archers.map(a => [a.id, a]));
-        const rangeMap = new Map(ranges.map(r => [r.id, r]));
+        // Sort series by number
+        allSeries.sort((a, b) => a.number - b.number);
 
-        // Sort by date (most recent first)
-        results.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // Create results lookup maps
+        const individualResultsMap = new Map();
+        const pairResultsMap = new Map();
+        
+        results.forEach(result => {
+            if (result.archerId && result.individualScore !== null && result.individualScore !== undefined) {
+                individualResultsMap.set(result.archerId, result);
+            }
+            if (result.pairType && result.pairScore !== null && result.pairScore !== undefined) {
+                const key = `${result.seriesId}-${result.targetNumber}-${result.pairType}`;
+                pairResultsMap.set(key, result);
+            }
+        });
 
         container.innerHTML = `
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Archer</th>
-                        <th>Pas de tir</th>
-                        <th>Score</th>
-                        <th>Notes</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${results.map(result => {
-                        const archer = archerMap.get(result.archerId);
-                        const range = rangeMap.get(result.rangeId);
-                        return `
-                            <tr>
-                                <td>${formatDate(result.date)}</td>
-                                <td>${archer ? `${archer.firstName} ${archer.name}` : 'N/A'}</td>
-                                <td>${range ? `${range.name} (${range.distance}m)` : 'N/A'}</td>
-                                <td><strong>${result.score}</strong></td>
-                                <td>${result.notes || '-'}</td>
-                                <td>
-                                    <button class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick="window.deleteResult(${result.id})">🗑️</button>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
+            <div style="margin-bottom: 1.5rem;">
+                <p><strong>Instructions :</strong></p>
+                <ul style="margin-left: 1.5rem; color: var(--light-text);">
+                    <li>Scores individuels : 0 à 300 points maximum</li>
+                    <li>Scores binômes (AC et BD) : 0 à 310 points maximum</li>
+                    <li>Les résultats sont sauvegardés automatiquement lors de la saisie</li>
+                </ul>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                ${allSeries.map(series => renderSeriesResults(series, archers, individualResultsMap, pairResultsMap)).join('')}
+            </div>
         `;
+
+        // Add event listeners for all score inputs
+        addScoreEventListeners();
+        
     } catch (error) {
-        console.error('Error loading results:', error);
-        container.innerHTML = '<p class="text-center">Erreur lors du chargement des résultats</p>';
+        console.error('Error loading results entry:', error);
+        container.innerHTML = '<p class="text-center">Erreur lors du chargement de la saisie des résultats</p>';
     }
 }
 
 /**
- * Delete a result
+ * Render results entry for a series
  */
-window.deleteResult = async function(id) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce résultat ?')) {
-        return;
+function renderSeriesResults(series, allArchers, individualResultsMap, pairResultsMap) {
+    // Filter archers for this series
+    const seriesArchers = allArchers.filter(a => a.seriesId === series.id);
+    
+    if (seriesArchers.length === 0) {
+        return `
+            <div class="card">
+                <div class="card-header">
+                    <h3>Série ${series.number}</h3>
+                </div>
+                <div class="card-body">
+                    <p>Aucun archer assigné à cette série</p>
+                </div>
+            </div>
+        `;
     }
+    
+    // Group archers by target
+    const targetGroups = {};
+    seriesArchers.forEach(archer => {
+        const targetNum = archer.targetNumber;
+        if (!targetGroups[targetNum]) {
+            targetGroups[targetNum] = { A: null, B: null, C: null, D: null };
+        }
+        targetGroups[targetNum][archer.position] = archer;
+    });
 
-    try {
-        await db.delete('results', id);
-        showToast('Résultat supprimé avec succès', 'success');
-        await loadResults();
-    } catch (error) {
-        console.error('Error deleting result:', error);
-        showToast('Erreur lors de la suppression', 'error');
+    // Sort targets numerically
+    const sortedTargets = Object.keys(targetGroups).sort((a, b) => parseInt(a) - parseInt(b));
+
+    return `
+        <div class="card">
+            <div class="card-header">
+                <h3>Série ${series.number}</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: var(--light-bg);">
+                                <th rowspan="2" style="border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; vertical-align: middle;">Cible</th>
+                                <th rowspan="2" style="border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; vertical-align: middle;">Pos.</th>
+                                <th rowspan="2" style="border: 1px solid var(--border-color); padding: 0.75rem; vertical-align: middle;">Archer</th>
+                                <th colspan="2" style="border: 1px solid var(--border-color); padding: 0.75rem; text-align: center;">Résultats</th>
+                            </tr>
+                            <tr style="background-color: var(--light-bg);">
+                                <th style="border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; min-width: 120px;">Score Individuel<br><small>(0-300)</small></th>
+                                <th style="border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; min-width: 120px;">Score Binôme<br><small>(0-310)</small></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sortedTargets.map(targetNum => renderTargetResults(series, targetNum, targetGroups[targetNum], individualResultsMap, pairResultsMap)).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Render results entry for a single target
+ */
+function renderTargetResults(series, targetNumber, positions, individualResultsMap, pairResultsMap) {
+    const rows = [];
+    const positionOrder = ['A', 'C', 'B', 'D'];
+    
+    positionOrder.forEach((pos, index) => {
+        const archer = positions[pos];
+        const isFirstOfPair = index === 0 || index === 2;
+        const pairType = index < 2 ? 'AC' : 'BD';
+        const rowspanCount = 2;
+        
+        // Get individual score
+        const individualResult = archer ? individualResultsMap.get(archer.id) : null;
+        const individualScore = individualResult ? individualResult.individualScore : '';
+        
+        // Get pair score (only for first position of pair)
+        const pairKey = `${series.id}-${targetNumber}-${pairType}`;
+        const pairResult = pairResultsMap.get(pairKey);
+        const pairScore = pairResult ? pairResult.pairScore : '';
+        
+        rows.push(`
+            <tr>
+                ${isFirstOfPair ? `<td rowspan="${rowspanCount}" style="border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; vertical-align: middle; font-weight: bold;">${targetNumber}</td>` : ''}
+                <td style="border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; font-weight: bold;">${pos}</td>
+                <td style="border: 1px solid var(--border-color); padding: 0.75rem;">
+                    ${archer ? `${archer.firstName} ${archer.name}` : '<em style="color: var(--light-text);">-</em>'}
+                </td>
+                <td style="border: 1px solid var(--border-color); padding: 0.5rem; text-align: center;">
+                    ${archer ? `
+                        <input type="number" 
+                            class="form-input individual-score" 
+                            style="width: 100px; text-align: center; padding: 0.5rem;"
+                            min="0" 
+                            max="300" 
+                            value="${individualScore}"
+                            data-archer-id="${archer.id}"
+                            data-series-id="${series.id}"
+                            data-target-number="${targetNumber}"
+                            placeholder="0-300">
+                    ` : '-'}
+                </td>
+                ${isFirstOfPair ? `
+                    <td rowspan="${rowspanCount}" style="border: 1px solid var(--border-color); padding: 0.5rem; text-align: center; vertical-align: middle;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                            <strong>${pairType}</strong>
+                            <input type="number" 
+                                class="form-input pair-score" 
+                                style="width: 100px; text-align: center; padding: 0.5rem;"
+                                min="0" 
+                                max="310" 
+                                value="${pairScore}"
+                                data-series-id="${series.id}"
+                                data-target-number="${targetNumber}"
+                                data-pair-type="${pairType}"
+                                placeholder="0-310">
+                        </div>
+                    </td>
+                ` : ''}
+            </tr>
+        `);
+    });
+    
+    return rows.join('');
+}
+
+/**
+ * Add event listeners for score inputs
+ */
+function addScoreEventListeners() {
+    // Individual score inputs
+    document.querySelectorAll('.individual-score').forEach(input => {
+        input.addEventListener('change', handleIndividualScoreChange);
+        input.addEventListener('blur', handleIndividualScoreChange);
+    });
+    
+    // Pair score inputs
+    document.querySelectorAll('.pair-score').forEach(input => {
+        input.addEventListener('change', handlePairScoreChange);
+        input.addEventListener('blur', handlePairScoreChange);
+    });
+}
+
+/**
+ * Handle individual score change
+ */
+async function handleIndividualScoreChange(e) {
+    const input = e.target;
+    const archerId = parseInt(input.dataset.archerId);
+    const seriesId = parseInt(input.dataset.seriesId);
+    const targetNumber = parseInt(input.dataset.targetNumber);
+    const scoreValue = input.value.trim();
+    
+    // Validate score
+    if (scoreValue !== '') {
+        const score = parseInt(scoreValue);
+        if (isNaN(score) || score < 0 || score > 300) {
+            showToast('Le score individuel doit être entre 0 et 300', 'error');
+            input.value = '';
+            return;
+        }
+        
+        // Save result
+        try {
+            // Check if result exists
+            const results = await db.getAll('results');
+            const existingResult = results.find(r => r.archerId === archerId && r.individualScore !== null && r.individualScore !== undefined);
+            
+            if (existingResult) {
+                // Update existing result
+                await db.update('results', {
+                    ...existingResult,
+                    individualScore: score,
+                    seriesId: seriesId,
+                    targetNumber: targetNumber,
+                    date: new Date().toISOString()
+                });
+            } else {
+                // Create new result
+                await db.addResult({
+                    archerId: archerId,
+                    seriesId: seriesId,
+                    targetNumber: targetNumber,
+                    individualScore: score
+                });
+            }
+            
+            showToast('Score individuel sauvegardé', 'success', 1500);
+        } catch (error) {
+            console.error('Error saving individual score:', error);
+            showToast('Erreur lors de la sauvegarde du score', 'error');
+        }
     }
-};
+}
+
+/**
+ * Handle pair score change
+ */
+async function handlePairScoreChange(e) {
+    const input = e.target;
+    const seriesId = parseInt(input.dataset.seriesId);
+    const targetNumber = parseInt(input.dataset.targetNumber);
+    const pairType = input.dataset.pairType;
+    const scoreValue = input.value.trim();
+    
+    // Validate score
+    if (scoreValue !== '') {
+        const score = parseInt(scoreValue);
+        if (isNaN(score) || score < 0 || score > 310) {
+            showToast('Le score binôme doit être entre 0 et 310', 'error');
+            input.value = '';
+            return;
+        }
+        
+        // Save result
+        try {
+            // Check if result exists
+            const results = await db.getAll('results');
+            const existingResult = results.find(r => 
+                r.seriesId === seriesId && 
+                r.targetNumber === targetNumber && 
+                r.pairType === pairType &&
+                r.pairScore !== null &&
+                r.pairScore !== undefined
+            );
+            
+            if (existingResult) {
+                // Update existing result
+                await db.update('results', {
+                    ...existingResult,
+                    pairScore: score,
+                    date: new Date().toISOString()
+                });
+            } else {
+                // Create new result
+                await db.addResult({
+                    seriesId: seriesId,
+                    targetNumber: targetNumber,
+                    pairType: pairType,
+                    pairScore: score
+                });
+            }
+            
+            showToast(`Score binôme ${pairType} sauvegardé`, 'success', 1500);
+        } catch (error) {
+            console.error('Error saving pair score:', error);
+            showToast('Erreur lors de la sauvegarde du score', 'error');
+        }
+    }
+}
+

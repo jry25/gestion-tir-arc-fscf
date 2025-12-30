@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'TirArcFSCF';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 /**
  * Database Schema
@@ -103,7 +103,23 @@ class Database {
                     resultsStore.createIndex('rangeId', 'rangeId', { unique: false });
                     resultsStore.createIndex('date', 'date', { unique: false });
                     resultsStore.createIndex('score', 'score', { unique: false });
+                    resultsStore.createIndex('seriesId', 'seriesId', { unique: false });
+                    resultsStore.createIndex('targetNumber', 'targetNumber', { unique: false });
                     console.log('Created results store');
+                }
+                
+                // Upgrade to version 3: Add indices for seriesId and targetNumber
+                if (event.oldVersion < 3) {
+                    if (db.objectStoreNames.contains('results')) {
+                        const resultsStore = event.target.transaction.objectStore('results');
+                        if (!resultsStore.indexNames.contains('seriesId')) {
+                            resultsStore.createIndex('seriesId', 'seriesId', { unique: false });
+                        }
+                        if (!resultsStore.indexNames.contains('targetNumber')) {
+                            resultsStore.createIndex('targetNumber', 'targetNumber', { unique: false });
+                        }
+                        console.log('Upgraded results store to version 3');
+                    }
                 }
             };
         });
@@ -339,12 +355,18 @@ class Database {
      */
     async addResult(result) {
         const resultData = {
-            archerId: result.archerId,
-            rangeId: result.rangeId,
-            score: result.score,
+            archerId: result.archerId || null,
+            seriesId: result.seriesId || null,
+            targetNumber: result.targetNumber || null,
+            rangeId: result.rangeId || null,
+            individualScore: result.individualScore || null,
+            pairScore: result.pairScore || null,
+            pairType: result.pairType || null, // 'AC' or 'BD'
             arrows: result.arrows || [],
             date: result.date || new Date().toISOString(),
-            notes: result.notes || ''
+            notes: result.notes || '',
+            // Deprecated field kept for backward compatibility
+            score: result.score || result.individualScore || result.pairScore || 0
         };
         return this.add('results', resultData);
     }
