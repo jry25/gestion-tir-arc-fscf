@@ -24,8 +24,17 @@ const STATIC_ASSETS = [
     `${BASE_PATH}js/pages/results.js`,
     `${BASE_PATH}js/pages/rankings.js`,
     `${BASE_PATH}js/pages/settings.js`,
+    `${BASE_PATH}icons/icon-72x72.png`,
+    `${BASE_PATH}icons/icon-96x96.png`,
+    `${BASE_PATH}icons/icon-128x128.png`,
+    `${BASE_PATH}icons/icon-144x144.png`,
+    `${BASE_PATH}icons/icon-152x152.png`,
     `${BASE_PATH}icons/icon-192x192.png`,
-    `${BASE_PATH}icons/icon-512x512.png`
+    `${BASE_PATH}icons/icon-384x384.png`,
+    `${BASE_PATH}icons/icon-512x512.png`,
+    `${BASE_PATH}icons/icon-512x512-maskable.png`,
+    `${BASE_PATH}screenshots/desktop-wide.png`,
+    `${BASE_PATH}screenshots/mobile.png`
 ];
 
 /**
