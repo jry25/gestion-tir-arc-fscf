@@ -10,7 +10,8 @@
       "prerelease": false,
       "extra-files": [
         "js/app.js",
-        "index.html"
+        "index.html",
+        "service-worker.js"
       ]
     }
   },
