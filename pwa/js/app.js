@@ -16,7 +16,7 @@ import * as RankingsPage from './pages/rankings.js';
  */
 class App {
     constructor() {
-        this.version = '1.0.0'; // x-release-please-version
+        this.version = '1.1.0'; // x-release-please-version
         this.serviceWorkerRegistration = null;
     }
 
