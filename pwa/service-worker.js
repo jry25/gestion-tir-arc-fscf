@@ -32,9 +32,9 @@ const STATIC_ASSETS = [
     `${BASE_PATH}icons/icon-192x192.png`,
     `${BASE_PATH}icons/icon-384x384.png`,
     `${BASE_PATH}icons/icon-512x512.png`,
-    `${BASE_PATH}icons/icon-512x512-maskable.png`,
-    `${BASE_PATH}screenshots/desktop-wide.png`,
-    `${BASE_PATH}screenshots/mobile.png`
+    `${BASE_PATH}icons/icon-512x512-maskable.png`
+    // Note: Screenshots are excluded from initial cache as they're only used in install UI
+    // They will be cached on-demand when requested
 ];
 
 /**
