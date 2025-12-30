@@ -23,6 +23,7 @@ const STATIC_ASSETS = [
     `${BASE_PATH}js/pages/shooting-ranges.js`,
     `${BASE_PATH}js/pages/results.js`,
     `${BASE_PATH}js/pages/rankings.js`,
+    `${BASE_PATH}js/pages/settings.js`,
     `${BASE_PATH}icons/icon-192x192.png`,
     `${BASE_PATH}icons/icon-512x512.png`
 ];

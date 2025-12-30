@@ -10,6 +10,7 @@ import * as ArchersPage from './pages/archers.js';
 import * as ShootingRangesPage from './pages/shooting-ranges.js';
 import * as ResultsPage from './pages/results.js';
 import * as RankingsPage from './pages/rankings.js';
+import * as SettingsPage from './pages/settings.js';
 
 /**
  * Application class
@@ -109,12 +110,32 @@ class App {
             await ShootingRangesPage.render();
         });
         
+        router.addRoute('pas-de-tir', async () => {
+            await ShootingRangesPage.render();
+        });
+        
         router.addRoute('results', async () => {
+            await ResultsPage.render();
+        });
+        
+        router.addRoute('resultats', async () => {
             await ResultsPage.render();
         });
         
         router.addRoute('rankings', async () => {
             await RankingsPage.render();
+        });
+        
+        router.addRoute('classements', async () => {
+            await RankingsPage.render();
+        });
+        
+        router.addRoute('settings', async () => {
+            await SettingsPage.render();
+        });
+        
+        router.addRoute('parametres', async () => {
+            await SettingsPage.render();
         });
         
         console.log('Routes configured');
