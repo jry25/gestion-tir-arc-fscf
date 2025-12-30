@@ -17,8 +17,6 @@ concurrency:
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    outputs:
-      release-created: ${{ steps.release_please.outputs.release_created }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,26 +24,3 @@ jobs:
       - name: Run release-please
         id: release_please
         uses: googleapis/release-please-action@v4
-
-  deploy:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.release-created == 'true' }}
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './pwa'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
