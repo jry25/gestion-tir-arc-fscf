@@ -272,7 +272,7 @@ window.exportAll = async function() {
         const categories = await db.getAll('categories');
 
         const data = {
-            version: '1.0.0',
+            version: '1.0.0', // x-release-please-version
             exportDate: new Date().toISOString(),
             data: {
                 archers,

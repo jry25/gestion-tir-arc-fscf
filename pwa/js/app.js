@@ -16,7 +16,7 @@ import * as ExportPage from './pages/export.js';
  */
 class App {
     constructor() {
-        this.version = '1.0.0';
+        this.version = '1.0.0'; // x-release-please-version
         this.serviceWorkerRegistration = null;
     }
 

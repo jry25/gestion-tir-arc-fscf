@@ -1,0 +1,32 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "pwa": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "simple",
+      "bump-minor-pre-major": false,
+      "bump-patch-for-minor-pre-major": false,
+      "draft": false,
+      "prerelease": false,
+      "extra-files": [
+        "pwa/js/app.js",
+        "pwa/index.html"
+      ]
+    }
+  },
+  "changelog-sections": [
+    { "type": "feat", "section": "✨ Features" },
+    { "type": "fix", "section": "🐛 Bug Fixes" },
+    { "type": "docs", "section": "📝 Documentation" },
+    { "type": "style", "section": "💄 Styles" },
+    { "type": "refactor", "section": "♻️ Code Refactoring" },
+    { "type": "perf", "section": "⚡ Performance Improvements" },
+    { "type": "test", "section": "✅ Tests" },
+    { "type": "chore", "section": "🧹 Chores" },
+    { "type": "build", "section": "🏗️ Build System" },
+    { "type": "ci", "section": "🔁 Continuous Integration" },
+    { "type": "revert", "section": "⏪ Reverts" },
+    { "type": "feat!", "section": "✨ Features (breaking)" },
+    { "type": "fix!", "section": "🐛 Fixes (breaking)" }
+  ]
+}
