@@ -9,7 +9,7 @@ import { updateOnlineStatus, showToast } from './utils.js';
 import * as ArchersPage from './pages/archers.js';
 import * as ShootingRangesPage from './pages/shooting-ranges.js';
 import * as ResultsPage from './pages/results.js';
-import * as ExportPage from './pages/export.js';
+import * as RankingsPage from './pages/rankings.js';
 
 /**
  * Application class
@@ -113,8 +113,8 @@ class App {
             await ResultsPage.render();
         });
         
-        router.addRoute('export', async () => {
-            await ExportPage.render();
+        router.addRoute('rankings', async () => {
+            await RankingsPage.render();
         });
         
         console.log('Routes configured');

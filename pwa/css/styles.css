@@ -460,3 +460,62 @@ body {
         font-size: 0.85rem;
     }
 }
+
+/* ====================================
+   Print Styles
+   ==================================== */
+@media print {
+    /* Hide non-printable elements */
+    .no-print,
+    .app-header,
+    .app-nav,
+    .app-footer {
+        display: none !important;
+    }
+    
+    /* Ensure page breaks work properly */
+    .ranking-section {
+        page-break-inside: avoid;
+    }
+    
+    /* Reset page margins for printing */
+    @page {
+        margin: 1cm;
+    }
+    
+    /* Ensure tables don't break awkwardly */
+    table {
+        page-break-inside: auto;
+    }
+    
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    
+    /* Make sure content uses full width when printing */
+    .container {
+        max-width: 100%;
+        padding: 0;
+    }
+    
+    /* Better contrast for printing */
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .card {
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+    
+    .table {
+        border: 1px solid #000;
+    }
+    
+    .table th,
+    .table td {
+        border: 1px solid #000;
+    }
+}

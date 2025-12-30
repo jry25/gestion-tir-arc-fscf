@@ -3,7 +3,7 @@
  * Handles offline caching and synchronization
  */
 
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.2.0'; // x-release-please-version
 const CACHE_NAME = `tir-arc-fscf-${CACHE_VERSION}`;
 
 // Get base path from service worker location
@@ -22,7 +22,7 @@ const STATIC_ASSETS = [
     `${BASE_PATH}js/pages/archers.js`,
     `${BASE_PATH}js/pages/shooting-ranges.js`,
     `${BASE_PATH}js/pages/results.js`,
-    `${BASE_PATH}js/pages/export.js`,
+    `${BASE_PATH}js/pages/rankings.js`,
     `${BASE_PATH}icons/icon-192x192.png`,
     `${BASE_PATH}icons/icon-512x512.png`
 ];
