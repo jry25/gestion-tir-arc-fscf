@@ -122,15 +122,15 @@ function setupEventListeners() {
             errorMsg.classList.add('hidden');
             
             try {
-                // Close modal first
-                modal.classList.add('hidden');
-                
                 // Show loading state
                 confirmBtn.disabled = true;
                 confirmBtn.textContent = 'Réinitialisation en cours...';
                 
                 // Clear all data
                 await db.clearAllData();
+                
+                // Close modal after successful operation
+                modal.classList.add('hidden');
                 
                 // Show success message
                 showToast('Toutes les données ont été supprimées avec succès', 'success');
@@ -144,6 +144,7 @@ function setupEventListeners() {
             } catch (error) {
                 console.error('Error clearing data:', error);
                 showToast('Erreur lors de la suppression des données', 'error');
+                // Reset button state and keep modal open for retry
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = 'Confirmer la réinitialisation';
             }
@@ -163,7 +164,7 @@ function setupEventListeners() {
 
     // Clear error message when user starts typing
     confirmInput.addEventListener('input', () => {
-        if (errorMsg.classList.contains('hidden') === false) {
+        if (!errorMsg.classList.contains('hidden')) {
             errorMsg.classList.add('hidden');
         }
     });
