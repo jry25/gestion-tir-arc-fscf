@@ -6,6 +6,22 @@ import db from '../db.js';
 import { showToast, getCategoryName, getWeaponName } from '../utils.js';
 
 /**
+ * Helper function to get archers in a pair based on pair type
+ * @param {Array} archers - All archers
+ * @param {number} seriesId - Series ID
+ * @param {number} targetNumber - Target number
+ * @param {string} pairType - Pair type ('AC' or 'BD')
+ * @returns {Array} - Filtered archers in the pair
+ */
+function getPairArchers(archers, seriesId, targetNumber, pairType) {
+    return archers.filter(a => 
+        a.seriesId === seriesId && 
+        a.targetNumber === targetNumber &&
+        (pairType === 'AC' ? (a.position === 'A' || a.position === 'C') : (a.position === 'B' || a.position === 'D'))
+    );
+}
+
+/**
  * Render the rankings page
  */
 export async function render() {
@@ -215,6 +231,8 @@ function calculateIndividualRankingByCategoryAndWeapon(archers, results) {
 
 /**
  * Calculate pair ranking
+ * Note: Pairs are grouped by the first archer's attributes (category, weapon, club).
+ * This assumes pairs are formed from archers with similar characteristics as per FSCF rules.
  */
 function calculatePairRanking(results, archers) {
     const ranking = [];
@@ -227,11 +245,7 @@ function calculatePairRanking(results, archers) {
                 processedPairs.add(key);
                 
                 // Find the two archers in this pair
-                const pairArchers = archers.filter(a => 
-                    a.seriesId === result.seriesId && 
-                    a.targetNumber === result.targetNumber &&
-                    (result.pairType === 'AC' ? (a.position === 'A' || a.position === 'C') : (a.position === 'B' || a.position === 'D'))
-                );
+                const pairArchers = getPairArchers(archers, result.seriesId, result.targetNumber, result.pairType);
                 
                 ranking.push({
                     pairType: result.pairType,
@@ -252,6 +266,7 @@ function calculatePairRanking(results, archers) {
 
 /**
  * Calculate pair ranking by category
+ * Note: Pairs are categorized by the first archer's category as per FSCF competition rules
  */
 function calculatePairRankingByCategory(results, archers) {
     const byCategory = {};
@@ -264,11 +279,7 @@ function calculatePairRankingByCategory(results, archers) {
                 processedPairs.add(key);
                 
                 // Find the two archers in this pair
-                const pairArchers = archers.filter(a => 
-                    a.seriesId === result.seriesId && 
-                    a.targetNumber === result.targetNumber &&
-                    (result.pairType === 'AC' ? (a.position === 'A' || a.position === 'C') : (a.position === 'B' || a.position === 'D'))
-                );
+                const pairArchers = getPairArchers(archers, result.seriesId, result.targetNumber, result.pairType);
                 
                 // Group by first archer's category (or use a common category logic)
                 if (pairArchers.length > 0 && pairArchers[0].category) {
@@ -298,6 +309,7 @@ function calculatePairRankingByCategory(results, archers) {
 
 /**
  * Calculate pair ranking by category and weapon
+ * Note: Pairs are categorized by the first archer's category and weapon type
  */
 function calculatePairRankingByCategoryAndWeapon(results, archers) {
     const byCategoryAndWeapon = {};
@@ -310,11 +322,7 @@ function calculatePairRankingByCategoryAndWeapon(results, archers) {
                 processedPairs.add(key);
                 
                 // Find the two archers in this pair
-                const pairArchers = archers.filter(a => 
-                    a.seriesId === result.seriesId && 
-                    a.targetNumber === result.targetNumber &&
-                    (result.pairType === 'AC' ? (a.position === 'A' || a.position === 'C') : (a.position === 'B' || a.position === 'D'))
-                );
+                const pairArchers = getPairArchers(archers, result.seriesId, result.targetNumber, result.pairType);
                 
                 // Group by first archer's category and weapon
                 if (pairArchers.length > 0 && pairArchers[0].category && pairArchers[0].weapon) {
@@ -348,6 +356,7 @@ function calculatePairRankingByCategoryAndWeapon(results, archers) {
 
 /**
  * Calculate club ranking
+ * Note: For pairs, the club of the first archer is used. Mixed-club pairs contribute to the first archer's club.
  */
 function calculateClubRanking(archers, results) {
     const clubScores = {};
@@ -384,11 +393,7 @@ function calculateClubRanking(archers, results) {
                 processedPairs.add(key);
                 
                 // Find the two archers in this pair
-                const pairArchers = archers.filter(a => 
-                    a.seriesId === result.seriesId && 
-                    a.targetNumber === result.targetNumber &&
-                    (result.pairType === 'AC' ? (a.position === 'A' || a.position === 'C') : (a.position === 'B' || a.position === 'D'))
-                );
+                const pairArchers = getPairArchers(archers, result.seriesId, result.targetNumber, result.pairType);
                 
                 // Add pair score to club (use first archer's club)
                 if (pairArchers.length > 0 && pairArchers[0].club) {
