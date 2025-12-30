@@ -388,6 +388,21 @@ class Database {
     async getResultsByRange(rangeId) {
         return this.getByIndex('results', 'rangeId', rangeId);
     }
+
+    /**
+     * Clear all competition data (archers, results, series, shooting ranges)
+     * WARNING: This will delete all data except categories
+     * @returns {Promise<void>}
+     */
+    async clearAllData() {
+        const storesToClear = ['archers', 'results', 'series', 'shootingRanges'];
+        
+        for (const storeName of storesToClear) {
+            await this.clear(storeName);
+        }
+        
+        console.log('All competition data has been cleared');
+    }
 }
 
 // Export singleton instance
