@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.1.0...v1.2.0) (2025-12-30)
+
+
+### ✨ Features
+
+* add settings page with data reset requiring typed confirmation ([#18](https://github.com/jry25/gestion-tir-arc-fscf/issues/18)) ([7ade4a1](https://github.com/jry25/gestion-tir-arc-fscf/commit/7ade4a1d1dc43a7e25c879ee6cdfeafd8088db05))
+
 ## [1.1.0](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.0.1...v1.1.0) (2025-12-30)
 
 
