@@ -247,8 +247,3 @@ Ce projet est développé pour la FSCF (Fédération Sportive et Culturelle de F
 ## 📞 Support
 
 Pour toute question concernant l'utilisation de l'application, veuillez consulter la documentation FSCF sur le règlement du tir à l'arc : https://www.fscf.asso.fr/
-
----
-
-**Version** : 1.0.0  
-**Dernière mise à jour** : Décembre 2025
