@@ -314,6 +314,43 @@ body {
     background-color: var(--light-bg);
 }
 
+/* Tied scores highlighting */
+.table tbody tr.tie-group {
+    background-color: #fff3cd;
+}
+
+.table tbody tr.tie-group:hover {
+    background-color: #ffe69c;
+}
+
+/* Rank adjustment buttons */
+.rank-controls {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.rank-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    background-color: var(--secondary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.rank-btn:hover {
+    background-color: #2980b9;
+}
+
+.rank-btn:disabled {
+    background-color: var(--border-color);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 /* ====================================
    Components - Loading
    ==================================== */
