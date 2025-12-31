@@ -133,16 +133,23 @@ function applyRankOverrides(ranking, rankingType, categoryKey) {
         };
     });
     
-    // Sort by manual rank first (if exists), then by score
+    // Sort by score first (descending), then by manual rank (if exists), then by original index
     rankedItems.sort((a, b) => {
+        // First, sort by score (descending)
+        if (a.scoreValue !== b.scoreValue) {
+            return b.scoreValue - a.scoreValue;
+        }
+        
+        // If scores are equal (tied), use manual rank to determine order within the tie
         if (a.manualRank !== null && b.manualRank !== null) {
             return a.manualRank - b.manualRank;
         } else if (a.manualRank !== null) {
-            return -1;
+            return -1; // Item with manual rank comes first
         } else if (b.manualRank !== null) {
-            return 1;
+            return 1; // Item with manual rank comes first
         } else {
-            return b.scoreValue - a.scoreValue; // Descending by score
+            // Both have same score and no manual rank, maintain original order
+            return a.originalIndex - b.originalIndex;
         }
     });
     
@@ -284,6 +291,86 @@ async function loadRankings() {
 }
 
 /**
+ * Swap ranks between adjacent items, handling ties correctly
+ * @param {string} rankingType - Type of ranking (individual, pair, club, etc.)
+ * @param {string} categoryKey - Category key for filtering
+ * @param {string} entityId - ID of the entity being moved
+ * @param {number} currentDisplayIndex - Current display position (1-indexed)
+ * @param {number} direction - Direction to move: -1 for up, 1 for down
+ */
+async function swapRanks(rankingType, categoryKey, entityId, currentDisplayIndex, direction) {
+    try {
+        // We need to re-calculate the current ranking to find the adjacent item
+        // Get the data fresh
+        const archers = await db.getAll('archers');
+        const results = await db.getAll('results');
+        
+        // Calculate the appropriate ranking based on type
+        let ranking;
+        if (rankingType === 'individual') {
+            ranking = calculateIndividualRanking(archers, results);
+        } else if (rankingType === 'individual-by-category') {
+            const byCategory = calculateIndividualRankingByCategory(archers, results);
+            ranking = byCategory[categoryKey] || [];
+        } else if (rankingType === 'individual-by-category-weapon') {
+            const byCategoryAndWeapon = calculateIndividualRankingByCategoryAndWeapon(archers, results);
+            ranking = byCategoryAndWeapon[categoryKey]?.archers || [];
+        } else if (rankingType === 'pair') {
+            ranking = calculatePairRanking(results, archers);
+        } else if (rankingType === 'pair-by-category') {
+            const byCategory = calculatePairRankingByCategory(results, archers);
+            ranking = byCategory[categoryKey] || [];
+        } else if (rankingType === 'pair-by-category-weapon') {
+            const byCategoryAndWeapon = calculatePairRankingByCategoryAndWeapon(results, archers);
+            ranking = byCategoryAndWeapon[categoryKey]?.pairs || [];
+        } else if (rankingType === 'club') {
+            ranking = calculateClubRanking(archers, results);
+        } else {
+            return; // Unknown ranking type
+        }
+        
+        // Apply current overrides to get the sorted order
+        const rankedItems = applyRankOverrides(ranking, rankingType, categoryKey);
+        
+        // Find the current and target items by their positions
+        const currentIndex = currentDisplayIndex - 1; // Convert to 0-indexed
+        const targetIndex = currentIndex + direction;
+        
+        if (targetIndex < 0 || targetIndex >= rankedItems.length) {
+            return; // Out of bounds
+        }
+        
+        const currentItem = rankedItems[currentIndex];
+        const targetItem = rankedItems[targetIndex];
+        
+        // Get their entity IDs
+        let currentEntityId = entityId;
+        let targetEntityId;
+        
+        if (targetItem.archer && targetItem.archer.id) {
+            targetEntityId = targetItem.archer.id;
+        } else if (targetItem.seriesId && targetItem.targetNumber && targetItem.pairType) {
+            targetEntityId = `${targetItem.seriesId}-${targetItem.targetNumber}-${targetItem.pairType}`;
+        } else if (targetItem.club) {
+            targetEntityId = targetItem.club;
+        }
+        
+        // Swap their manual ranks
+        // Use a small relative ordering number that indicates order within the same score
+        const currentManualRank = currentItem.manualRank !== null ? currentItem.manualRank : currentIndex;
+        const targetManualRank = targetItem.manualRank !== null ? targetItem.manualRank : targetIndex;
+        
+        // Swap the ranks
+        await saveRankOverride(rankingType, categoryKey, currentEntityId, targetManualRank);
+        await saveRankOverride(rankingType, categoryKey, targetEntityId, currentManualRank);
+        
+    } catch (error) {
+        console.error('Error swapping ranks:', error);
+        showToast('Erreur lors du changement de rang', 'error');
+    }
+}
+
+/**
  * Setup event handlers for rank control buttons
  */
 function setupRankControlEventHandlers() {
@@ -301,7 +388,7 @@ function setupRankControlEventHandlers() {
             
             // Validate rank (must be > 1)
             if (currentRank > 1) {
-                await saveRankOverride(rankingType, categoryKey, entityId, currentRank - 1);
+                await swapRanks(rankingType, categoryKey, entityId, currentRank, -1);
                 await loadRankings();
             }
         } else if (target.classList.contains('rank-down')) {
@@ -311,7 +398,7 @@ function setupRankControlEventHandlers() {
             const currentRank = parseInt(target.dataset.currentRank);
             
             // No upper limit validation needed as button is disabled at bottom
-            await saveRankOverride(rankingType, categoryKey, entityId, currentRank + 1);
+            await swapRanks(rankingType, categoryKey, entityId, currentRank, 1);
             await loadRankings();
         } else if (target.classList.contains('rank-reset')) {
             const rankingType = target.dataset.rankingType;
@@ -693,7 +780,7 @@ function renderIndividualRankingTable(ranking, rankingType = 'individual', categ
                         return `
                             <tr class="${tieClass}" data-entity-id="${entityId}">
                                 <td>
-                                    <strong>${item.manualRank !== null ? item.manualRank : currentRank}</strong>
+                                    <strong>${currentRank}</strong>
                                     ${item.manualRank !== null ? '<span style="font-size: 0.8em; color: var(--secondary-color);">*</span>' : ''}
                                 </td>
                                 <td>${item.archer.name}</td>
@@ -805,7 +892,7 @@ function renderPairRankingTable(ranking, rankingType = 'pair', categoryKey = 'al
                         return `
                             <tr class="${tieClass}" data-entity-id="${entityId}">
                                 <td>
-                                    <strong>${item.manualRank !== null ? item.manualRank : currentRank}</strong>
+                                    <strong>${currentRank}</strong>
                                     ${item.manualRank !== null ? '<span style="font-size: 0.8em; color: var(--secondary-color);">*</span>' : ''}
                                 </td>
                                 <td>${item.pairType}</td>
@@ -912,7 +999,7 @@ function renderClubRankingTable(ranking) {
                         return `
                             <tr class="${tieClass}" data-entity-id="${entityId}">
                                 <td>
-                                    <strong>${item.manualRank !== null ? item.manualRank : currentRank}</strong>
+                                    <strong>${currentRank}</strong>
                                     ${item.manualRank !== null ? '<span style="font-size: 0.8em; color: var(--secondary-color);">*</span>' : ''}
                                 </td>
                                 <td>${item.club}</td>
