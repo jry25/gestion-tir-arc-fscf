@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'TirArcFSCF';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 /**
  * Database Schema
@@ -119,6 +119,20 @@ class Database {
                             resultsStore.createIndex('targetNumber', 'targetNumber', { unique: false });
                         }
                         console.log('Upgraded results store to version 3');
+                    }
+                }
+                
+                // Upgrade to version 4: Add rankOverrides store for manual rank adjustments
+                if (event.oldVersion < 4) {
+                    if (!db.objectStoreNames.contains('rankOverrides')) {
+                        const rankOverridesStore = db.createObjectStore('rankOverrides', {
+                            keyPath: 'id',
+                            autoIncrement: true
+                        });
+                        rankOverridesStore.createIndex('rankingType', 'rankingType', { unique: false });
+                        rankOverridesStore.createIndex('categoryKey', 'categoryKey', { unique: false });
+                        rankOverridesStore.createIndex('entityId', 'entityId', { unique: false });
+                        console.log('Created rankOverrides store');
                     }
                 }
             };

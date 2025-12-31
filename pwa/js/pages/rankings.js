@@ -5,6 +5,150 @@
 import db from '../db.js';
 import { showToast, getCategoryName, getWeaponName } from '../utils.js';
 
+// Store for manual rank overrides
+let rankOverrides = {};
+
+/**
+ * Load rank overrides from database
+ */
+async function loadRankOverrides() {
+    try {
+        const overrides = await db.getAll('rankOverrides');
+        rankOverrides = {};
+        overrides.forEach(override => {
+            const key = `${override.rankingType}-${override.categoryKey || 'all'}-${override.entityId}`;
+            rankOverrides[key] = override.manualRank;
+        });
+    } catch (error) {
+        console.error('Error loading rank overrides:', error);
+        rankOverrides = {};
+    }
+}
+
+/**
+ * Save rank override to database
+ */
+async function saveRankOverride(rankingType, categoryKey, entityId, manualRank) {
+    try {
+        // Check if override already exists
+        const existingOverrides = await db.getAll('rankOverrides');
+        const existing = existingOverrides.find(
+            o => o.rankingType === rankingType && 
+                 o.categoryKey === categoryKey && 
+                 o.entityId === entityId
+        );
+        
+        if (existing) {
+            // Update existing
+            existing.manualRank = manualRank;
+            await db.update('rankOverrides', existing);
+        } else {
+            // Create new
+            await db.add('rankOverrides', {
+                rankingType,
+                categoryKey: categoryKey || 'all',
+                entityId,
+                manualRank,
+                createdAt: new Date().toISOString()
+            });
+        }
+        
+        // Update local cache
+        const key = `${rankingType}-${categoryKey || 'all'}-${entityId}`;
+        rankOverrides[key] = manualRank;
+        
+        showToast('Rang modifié avec succès', 'success');
+    } catch (error) {
+        console.error('Error saving rank override:', error);
+        showToast('Erreur lors de la modification du rang', 'error');
+    }
+}
+
+/**
+ * Get manual rank override if it exists
+ */
+function getRankOverride(rankingType, categoryKey, entityId) {
+    const key = `${rankingType}-${categoryKey || 'all'}-${entityId}`;
+    return rankOverrides[key];
+}
+
+/**
+ * Detect ties in a ranking array
+ * Returns an array of groups, where each group contains indices of tied items
+ */
+function detectTies(ranking) {
+    const tieGroups = [];
+    const scoreMap = new Map();
+    
+    ranking.forEach((item, index) => {
+        const score = item.score;
+        if (!scoreMap.has(score)) {
+            scoreMap.set(score, []);
+        }
+        scoreMap.get(score).push(index);
+    });
+    
+    // Only include groups with 2+ items (actual ties)
+    scoreMap.forEach((indices, score) => {
+        if (indices.length > 1) {
+            tieGroups.push({ score, indices });
+        }
+    });
+    
+    return tieGroups;
+}
+
+/**
+ * Apply manual rank overrides to a ranking array
+ */
+function applyRankOverrides(ranking, rankingType, categoryKey) {
+    // First, check if any manual overrides exist for this ranking
+    const rankedItems = ranking.map((item, index) => {
+        // Determine entityId based on ranking type
+        let entityId;
+        if (item.archer && item.archer.id) {
+            // Individual ranking
+            entityId = item.archer.id;
+        } else if (item.seriesId && item.targetNumber && item.pairType) {
+            // Pair ranking
+            entityId = `${item.seriesId}-${item.targetNumber}-${item.pairType}`;
+        } else if (item.club) {
+            // Club ranking
+            entityId = item.club;
+        } else {
+            entityId = index; // Fallback
+        }
+        
+        const manualRank = getRankOverride(rankingType, categoryKey, entityId);
+        
+        // Determine score field based on item type
+        const scoreValue = item.total !== undefined ? item.total : item.score;
+        
+        return {
+            ...item,
+            originalIndex: index,
+            entityId,
+            manualRank: manualRank !== undefined ? manualRank : null,
+            scoreValue // Add normalized score value for sorting
+        };
+    });
+    
+    // Sort by manual rank first (if exists), then by score
+    rankedItems.sort((a, b) => {
+        if (a.manualRank !== null && b.manualRank !== null) {
+            return a.manualRank - b.manualRank;
+        } else if (a.manualRank !== null) {
+            return -1;
+        } else if (b.manualRank !== null) {
+            return 1;
+        } else {
+            return b.scoreValue - a.scoreValue; // Descending by score
+        }
+    });
+    
+    return rankedItems;
+}
+
 /**
  * Helper function to get archers in a pair based on pair type
  * @param {Array} archers - All archers
@@ -43,6 +187,9 @@ export async function render() {
         </div>
     `;
 
+    // Load rank overrides first
+    await loadRankOverrides();
+    
     // Load rankings
     await loadRankings();
     
@@ -127,10 +274,72 @@ async function loadRankings() {
         
         container.innerHTML = html;
         
+        // Setup event handlers for rank adjustment buttons
+        setupRankControlEventHandlers();
+        
     } catch (error) {
         console.error('Error loading rankings:', error);
         container.innerHTML = '<div class="card"><div class="card-body"><p class="text-center">Erreur lors du chargement des classements</p></div></div>';
     }
+}
+
+/**
+ * Setup event handlers for rank control buttons
+ */
+function setupRankControlEventHandlers() {
+    // Use event delegation for better performance
+    const container = document.getElementById('rankings-container');
+    
+    container.addEventListener('click', async (e) => {
+        const target = e.target;
+        
+        if (target.classList.contains('rank-up')) {
+            const rankingType = target.dataset.rankingType;
+            const categoryKey = target.dataset.categoryKey || 'all';
+            const entityId = target.dataset.entityId;
+            const currentRank = parseInt(target.dataset.currentRank);
+            
+            // Validate rank (must be > 1)
+            if (currentRank > 1) {
+                await saveRankOverride(rankingType, categoryKey, entityId, currentRank - 1);
+                await loadRankings();
+            }
+        } else if (target.classList.contains('rank-down')) {
+            const rankingType = target.dataset.rankingType;
+            const categoryKey = target.dataset.categoryKey || 'all';
+            const entityId = target.dataset.entityId;
+            const currentRank = parseInt(target.dataset.currentRank);
+            
+            // No upper limit validation needed as button is disabled at bottom
+            await saveRankOverride(rankingType, categoryKey, entityId, currentRank + 1);
+            await loadRankings();
+        } else if (target.classList.contains('rank-reset')) {
+            const rankingType = target.dataset.rankingType;
+            const categoryKey = target.dataset.categoryKey || 'all';
+            const entityId = target.dataset.entityId;
+            
+            // Remove the override from database
+            try {
+                const overrides = await db.getAll('rankOverrides');
+                const existing = overrides.find(
+                    o => o.rankingType === rankingType && 
+                         o.categoryKey === categoryKey && 
+                         o.entityId === entityId
+                );
+                
+                if (existing) {
+                    await db.delete('rankOverrides', existing.id);
+                    const key = `${rankingType}-${categoryKey}-${entityId}`;
+                    delete rankOverrides[key];
+                    showToast('Rang réinitialisé', 'success');
+                    await loadRankings();
+                }
+            } catch (error) {
+                console.error('Error resetting rank:', error);
+                showToast('Erreur lors de la réinitialisation', 'error');
+            }
+        }
+    });
 }
 
 /**
@@ -443,10 +652,20 @@ function renderRankingSection(title, content, pageBreak = true) {
 /**
  * Render individual ranking table
  */
-function renderIndividualRankingTable(ranking) {
+function renderIndividualRankingTable(ranking, rankingType = 'individual', categoryKey = 'all') {
     if (ranking.length === 0) {
         return '<p class="text-center">Aucune donnée disponible</p>';
     }
+    
+    // Apply manual rank overrides
+    const rankedItems = applyRankOverrides(ranking, rankingType, categoryKey);
+    
+    // Detect ties based on scores (find scores that appear more than once)
+    const scoreCount = {};
+    rankedItems.forEach(item => {
+        scoreCount[item.score] = (scoreCount[item.score] || 0) + 1;
+    });
+    const tiedScores = new Set(Object.keys(scoreCount).filter(score => scoreCount[score] > 1).map(Number));
     
     return `
         <div class="table-responsive">
@@ -461,21 +680,41 @@ function renderIndividualRankingTable(ranking) {
                         <th>Catégorie</th>
                         <th>Type d'Arc</th>
                         <th>Score</th>
+                        <th class="no-print">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${ranking.map((item, index) => `
-                        <tr>
-                            <td><strong>${index + 1}</strong></td>
-                            <td>${item.archer.name}</td>
-                            <td>${item.archer.firstName}</td>
-                            <td>${item.archer.license || '-'}</td>
-                            <td>${item.archer.club || '-'}</td>
-                            <td>${getCategoryName(item.archer.category)}</td>
-                            <td>${getWeaponName(item.archer.weapon)}</td>
-                            <td><strong>${item.score}</strong></td>
-                        </tr>
-                    `).join('')}
+                    ${rankedItems.map((item, displayIndex) => {
+                        const isTied = tiedScores.has(item.score);
+                        const tieClass = isTied ? 'tie-group' : '';
+                        const entityId = item.archer.id;
+                        const currentRank = displayIndex + 1;
+                        
+                        return `
+                            <tr class="${tieClass}" data-entity-id="${entityId}">
+                                <td>
+                                    <strong>${item.manualRank !== null ? item.manualRank : currentRank}</strong>
+                                    ${item.manualRank !== null ? '<span style="font-size: 0.8em; color: var(--secondary-color);">*</span>' : ''}
+                                </td>
+                                <td>${item.archer.name}</td>
+                                <td>${item.archer.firstName}</td>
+                                <td>${item.archer.license || '-'}</td>
+                                <td>${item.archer.club || '-'}</td>
+                                <td>${getCategoryName(item.archer.category)}</td>
+                                <td>${getWeaponName(item.archer.weapon)}</td>
+                                <td><strong>${item.score}</strong></td>
+                                <td class="no-print">
+                                    ${isTied ? `
+                                        <div class="rank-controls">
+                                            <button class="rank-btn rank-up" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
+                                            <button class="rank-btn rank-down" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
+                                            ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}">↻</button>` : ''}
+                                        </div>
+                                    ` : '-'}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
                 </tbody>
             </table>
         </div>
@@ -495,7 +734,7 @@ function renderIndividualRankingByCategory(byCategory) {
     return categories.map(category => `
         <div style="margin-bottom: 2rem;">
             <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Catégorie: ${getCategoryName(category)}</h3>
-            ${renderIndividualRankingTable(byCategory[category])}
+            ${renderIndividualRankingTable(byCategory[category], 'individual-by-category', category)}
         </div>
     `).join('');
 }
@@ -517,7 +756,7 @@ function renderIndividualRankingByCategoryAndWeapon(byCategoryAndWeapon) {
                 <h3 style="margin-bottom: 1rem; color: var(--primary-color);">
                     Catégorie: ${getCategoryName(data.category)} - ${getWeaponName(data.weapon)}
                 </h3>
-                ${renderIndividualRankingTable(data.archers)}
+                ${renderIndividualRankingTable(data.archers, 'individual-by-category-weapon', key)}
             </div>
         `;
     }).join('');
@@ -526,10 +765,20 @@ function renderIndividualRankingByCategoryAndWeapon(byCategoryAndWeapon) {
 /**
  * Render pair ranking table
  */
-function renderPairRankingTable(ranking) {
+function renderPairRankingTable(ranking, rankingType = 'pair', categoryKey = 'all') {
     if (ranking.length === 0) {
         return '<p class="text-center">Aucune donnée disponible</p>';
     }
+    
+    // Apply manual rank overrides
+    const rankedItems = applyRankOverrides(ranking, rankingType, categoryKey);
+    
+    // Detect ties based on scores (find scores that appear more than once)
+    const scoreCount = {};
+    rankedItems.forEach(item => {
+        scoreCount[item.score] = (scoreCount[item.score] || 0) + 1;
+    });
+    const tiedScores = new Set(Object.keys(scoreCount).filter(score => scoreCount[score] > 1).map(Number));
     
     return `
         <div class="table-responsive">
@@ -541,19 +790,37 @@ function renderPairRankingTable(ranking) {
                         <th>Archers</th>
                         <th>Club</th>
                         <th>Score</th>
+                        <th class="no-print">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${ranking.map((item, index) => {
+                    ${rankedItems.map((item, displayIndex) => {
+                        const isTied = tiedScores.has(item.score);
+                        const tieClass = isTied ? 'tie-group' : '';
                         const archerNames = item.archers.map(a => `${a.firstName} ${a.name}`).join(' / ');
                         const club = item.archers.length > 0 ? item.archers[0].club || '-' : '-';
+                        const entityId = `${item.seriesId}-${item.targetNumber}-${item.pairType}`;
+                        const currentRank = displayIndex + 1;
+                        
                         return `
-                            <tr>
-                                <td><strong>${index + 1}</strong></td>
+                            <tr class="${tieClass}" data-entity-id="${entityId}">
+                                <td>
+                                    <strong>${item.manualRank !== null ? item.manualRank : currentRank}</strong>
+                                    ${item.manualRank !== null ? '<span style="font-size: 0.8em; color: var(--secondary-color);">*</span>' : ''}
+                                </td>
                                 <td>${item.pairType}</td>
                                 <td>${archerNames || '-'}</td>
                                 <td>${club}</td>
                                 <td><strong>${item.score}</strong></td>
+                                <td class="no-print">
+                                    ${isTied ? `
+                                        <div class="rank-controls">
+                                            <button class="rank-btn rank-up" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
+                                            <button class="rank-btn rank-down" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
+                                            ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}">↻</button>` : ''}
+                                        </div>
+                                    ` : '-'}
+                                </td>
                             </tr>
                         `;
                     }).join('')}
@@ -576,7 +843,7 @@ function renderPairRankingByCategory(byCategory) {
     return categories.map(category => `
         <div style="margin-bottom: 2rem;">
             <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Catégorie: ${getCategoryName(category)}</h3>
-            ${renderPairRankingTable(byCategory[category])}
+            ${renderPairRankingTable(byCategory[category], 'pair-by-category', category)}
         </div>
     `).join('');
 }
@@ -598,7 +865,7 @@ function renderPairRankingByCategoryAndWeapon(byCategoryAndWeapon) {
                 <h3 style="margin-bottom: 1rem; color: var(--primary-color);">
                     Catégorie: ${getCategoryName(data.category)} - ${getWeaponName(data.weapon)}
                 </h3>
-                ${renderPairRankingTable(data.pairs)}
+                ${renderPairRankingTable(data.pairs, 'pair-by-category-weapon', key)}
             </div>
         `;
     }).join('');
@@ -612,6 +879,16 @@ function renderClubRankingTable(ranking) {
         return '<p class="text-center">Aucune donnée disponible</p>';
     }
     
+    // Apply manual rank overrides
+    const rankedItems = applyRankOverrides(ranking, 'club', 'all');
+    
+    // Detect ties based on total scores (find scores that appear more than once)
+    const scoreCount = {};
+    rankedItems.forEach(item => {
+        scoreCount[item.total] = (scoreCount[item.total] || 0) + 1;
+    });
+    const tiedScores = new Set(Object.keys(scoreCount).filter(score => scoreCount[score] > 1).map(Number));
+    
     return `
         <div class="table-responsive">
             <table class="table">
@@ -622,18 +899,38 @@ function renderClubRankingTable(ranking) {
                         <th>Total Individuel</th>
                         <th>Total Binômes</th>
                         <th>Total Général</th>
+                        <th class="no-print">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${ranking.map((item, index) => `
-                        <tr>
-                            <td><strong>${index + 1}</strong></td>
-                            <td>${item.club}</td>
-                            <td>${item.individualTotal}</td>
-                            <td>${item.pairTotal}</td>
-                            <td><strong>${item.total}</strong></td>
-                        </tr>
-                    `).join('')}
+                    ${rankedItems.map((item, displayIndex) => {
+                        const isTied = tiedScores.has(item.total);
+                        const tieClass = isTied ? 'tie-group' : '';
+                        const entityId = item.club;
+                        const currentRank = displayIndex + 1;
+                        
+                        return `
+                            <tr class="${tieClass}" data-entity-id="${entityId}">
+                                <td>
+                                    <strong>${item.manualRank !== null ? item.manualRank : currentRank}</strong>
+                                    ${item.manualRank !== null ? '<span style="font-size: 0.8em; color: var(--secondary-color);">*</span>' : ''}
+                                </td>
+                                <td>${item.club}</td>
+                                <td>${item.individualTotal}</td>
+                                <td>${item.pairTotal}</td>
+                                <td><strong>${item.total}</strong></td>
+                                <td class="no-print">
+                                    ${isTied ? `
+                                        <div class="rank-controls">
+                                            <button class="rank-btn rank-up" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
+                                            <button class="rank-btn rank-down" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
+                                            ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}">↻</button>` : ''}
+                                        </div>
+                                    ` : '-'}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
                 </tbody>
             </table>
         </div>
