@@ -646,12 +646,12 @@ function renderIndividualRankingTable(ranking, rankingType = 'individual', categ
     // Apply manual rank overrides
     const rankedItems = applyRankOverrides(ranking, rankingType, categoryKey);
     
-    // Detect ties
-    const tieGroups = detectTies(ranking);
-    const tieIndices = new Set();
-    tieGroups.forEach(group => {
-        group.indices.forEach(idx => tieIndices.add(idx));
+    // Detect ties based on scores (find scores that appear more than once)
+    const scoreCount = {};
+    rankedItems.forEach(item => {
+        scoreCount[item.score] = (scoreCount[item.score] || 0) + 1;
     });
+    const tiedScores = new Set(Object.keys(scoreCount).filter(score => scoreCount[score] > 1).map(Number));
     
     return `
         <div class="table-responsive">
@@ -671,7 +671,7 @@ function renderIndividualRankingTable(ranking, rankingType = 'individual', categ
                 </thead>
                 <tbody>
                     ${rankedItems.map((item, displayIndex) => {
-                        const isTied = tieIndices.has(item.originalIndex);
+                        const isTied = tiedScores.has(item.score);
                         const tieClass = isTied ? 'tie-group' : '';
                         const entityId = item.archer.id;
                         const currentRank = displayIndex + 1;
@@ -757,12 +757,12 @@ function renderPairRankingTable(ranking, rankingType = 'pair', categoryKey = 'al
     // Apply manual rank overrides
     const rankedItems = applyRankOverrides(ranking, rankingType, categoryKey);
     
-    // Detect ties
-    const tieGroups = detectTies(ranking);
-    const tieIndices = new Set();
-    tieGroups.forEach(group => {
-        group.indices.forEach(idx => tieIndices.add(idx));
+    // Detect ties based on scores (find scores that appear more than once)
+    const scoreCount = {};
+    rankedItems.forEach(item => {
+        scoreCount[item.score] = (scoreCount[item.score] || 0) + 1;
     });
+    const tiedScores = new Set(Object.keys(scoreCount).filter(score => scoreCount[score] > 1).map(Number));
     
     return `
         <div class="table-responsive">
@@ -779,7 +779,7 @@ function renderPairRankingTable(ranking, rankingType = 'pair', categoryKey = 'al
                 </thead>
                 <tbody>
                     ${rankedItems.map((item, displayIndex) => {
-                        const isTied = tieIndices.has(item.originalIndex);
+                        const isTied = tiedScores.has(item.score);
                         const tieClass = isTied ? 'tie-group' : '';
                         const archerNames = item.archers.map(a => `${a.firstName} ${a.name}`).join(' / ');
                         const club = item.archers.length > 0 ? item.archers[0].club || '-' : '-';
@@ -864,12 +864,12 @@ function renderClubRankingTable(ranking) {
     // Apply manual rank overrides
     const rankedItems = applyRankOverrides(ranking, 'club', 'all');
     
-    // Detect ties
-    const tieGroups = detectTies(ranking);
-    const tieIndices = new Set();
-    tieGroups.forEach(group => {
-        group.indices.forEach(idx => tieIndices.add(idx));
+    // Detect ties based on scores (find scores that appear more than once)
+    const scoreCount = {};
+    rankedItems.forEach(item => {
+        scoreCount[item.total] = (scoreCount[item.total] || 0) + 1;
     });
+    const tiedScores = new Set(Object.keys(scoreCount).filter(score => scoreCount[score] > 1).map(Number));
     
     return `
         <div class="table-responsive">
@@ -886,7 +886,7 @@ function renderClubRankingTable(ranking) {
                 </thead>
                 <tbody>
                     ${rankedItems.map((item, displayIndex) => {
-                        const isTied = tieIndices.has(item.originalIndex);
+                        const isTied = tiedScores.has(item.total);
                         const tieClass = isTied ? 'tie-group' : '';
                         const entityId = item.club;
                         const currentRank = displayIndex + 1;
