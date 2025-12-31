@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.3.0...v1.3.1) (2025-12-31)
+
+
+### 🐛 Bug Fixes
+
+* potential fix for code scanning alert no. 1: Unvalidated dynamic method call ([#26](https://github.com/jry25/gestion-tir-arc-fscf/issues/26)) ([c6ba45a](https://github.com/jry25/gestion-tir-arc-fscf/commit/c6ba45ae9e05f3fbf6533f8711b389554e464fe7))
+
 ## [1.3.0](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.2.1...v1.3.0) (2025-12-31)
 
 
