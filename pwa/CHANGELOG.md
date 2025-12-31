@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.2.1...v1.3.0) (2025-12-31)
+
+
+### ✨ Features
+
+* add tie highlighting and manual rank adjustment for tied scores ([#24](https://github.com/jry25/gestion-tir-arc-fscf/issues/24)) ([345e794](https://github.com/jry25/gestion-tir-arc-fscf/commit/345e794edb23ccf9f29a555043fb6f647dbf8ac9))
+
 ## [1.2.1](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.2.0...v1.2.1) (2025-12-30)
 
 
