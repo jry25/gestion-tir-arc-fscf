@@ -104,13 +104,32 @@ function detectTies(ranking) {
 function applyRankOverrides(ranking, rankingType, categoryKey) {
     // First, check if any manual overrides exist for this ranking
     const rankedItems = ranking.map((item, index) => {
-        const entityId = item.archer?.id || item.pairType || item.club;
+        // Determine entityId based on ranking type
+        let entityId;
+        if (item.archer && item.archer.id) {
+            // Individual ranking
+            entityId = item.archer.id;
+        } else if (item.seriesId && item.targetNumber && item.pairType) {
+            // Pair ranking
+            entityId = `${item.seriesId}-${item.targetNumber}-${item.pairType}`;
+        } else if (item.club) {
+            // Club ranking
+            entityId = item.club;
+        } else {
+            entityId = index; // Fallback
+        }
+        
         const manualRank = getRankOverride(rankingType, categoryKey, entityId);
+        
+        // Determine score field based on item type
+        const scoreValue = item.total !== undefined ? item.total : item.score;
+        
         return {
             ...item,
             originalIndex: index,
             entityId,
-            manualRank: manualRank !== undefined ? manualRank : null
+            manualRank: manualRank !== undefined ? manualRank : null,
+            scoreValue // Add normalized score value for sorting
         };
     });
     
@@ -123,7 +142,7 @@ function applyRankOverrides(ranking, rankingType, categoryKey) {
         } else if (b.manualRank !== null) {
             return 1;
         } else {
-            return b.score - a.score; // Descending by score
+            return b.scoreValue - a.scoreValue; // Descending by score
         }
     });
     
@@ -268,40 +287,36 @@ async function loadRankings() {
  * Setup event handlers for rank control buttons
  */
 function setupRankControlEventHandlers() {
-    // Handle rank up buttons
-    document.querySelectorAll('.rank-up').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const rankingType = e.target.dataset.rankingType;
-            const categoryKey = e.target.dataset.categoryKey;
-            const entityId = e.target.dataset.entityId;
-            const currentRank = parseInt(e.target.dataset.currentRank);
-            
-            await saveRankOverride(rankingType, categoryKey, entityId, currentRank - 1);
-            await loadRankings();
-            setupRankControlEventHandlers();
-        });
-    });
+    // Use event delegation for better performance
+    const container = document.getElementById('rankings-container');
     
-    // Handle rank down buttons
-    document.querySelectorAll('.rank-down').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const rankingType = e.target.dataset.rankingType;
-            const categoryKey = e.target.dataset.categoryKey;
-            const entityId = e.target.dataset.entityId;
-            const currentRank = parseInt(e.target.dataset.currentRank);
+    container.addEventListener('click', async (e) => {
+        const target = e.target;
+        
+        if (target.classList.contains('rank-up')) {
+            const rankingType = target.dataset.rankingType;
+            const categoryKey = target.dataset.categoryKey || 'all';
+            const entityId = target.dataset.entityId;
+            const currentRank = parseInt(target.dataset.currentRank);
             
+            // Validate rank (must be > 1)
+            if (currentRank > 1) {
+                await saveRankOverride(rankingType, categoryKey, entityId, currentRank - 1);
+                await loadRankings();
+            }
+        } else if (target.classList.contains('rank-down')) {
+            const rankingType = target.dataset.rankingType;
+            const categoryKey = target.dataset.categoryKey || 'all';
+            const entityId = target.dataset.entityId;
+            const currentRank = parseInt(target.dataset.currentRank);
+            
+            // No upper limit validation needed as button is disabled at bottom
             await saveRankOverride(rankingType, categoryKey, entityId, currentRank + 1);
             await loadRankings();
-            setupRankControlEventHandlers();
-        });
-    });
-    
-    // Handle rank reset buttons
-    document.querySelectorAll('.rank-reset').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const rankingType = e.target.dataset.rankingType;
-            const categoryKey = e.target.dataset.categoryKey;
-            const entityId = e.target.dataset.entityId;
+        } else if (target.classList.contains('rank-reset')) {
+            const rankingType = target.dataset.rankingType;
+            const categoryKey = target.dataset.categoryKey || 'all';
+            const entityId = target.dataset.entityId;
             
             // Remove the override from database
             try {
@@ -318,13 +333,12 @@ function setupRankControlEventHandlers() {
                     delete rankOverrides[key];
                     showToast('Rang réinitialisé', 'success');
                     await loadRankings();
-                    setupRankControlEventHandlers();
                 }
             } catch (error) {
                 console.error('Error resetting rank:', error);
                 showToast('Erreur lors de la réinitialisation', 'error');
             }
-        });
+        }
     });
 }
 
@@ -690,11 +704,13 @@ function renderIndividualRankingTable(ranking, rankingType = 'individual', categ
                                 <td>${getWeaponName(item.archer.weapon)}</td>
                                 <td><strong>${item.score}</strong></td>
                                 <td class="no-print">
-                                    <div class="rank-controls">
-                                        <button class="rank-btn rank-up" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
-                                        <button class="rank-btn rank-down" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
-                                        ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}">↻</button>` : ''}
-                                    </div>
+                                    ${isTied ? `
+                                        <div class="rank-controls">
+                                            <button class="rank-btn rank-up" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
+                                            <button class="rank-btn rank-down" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
+                                            ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}">↻</button>` : ''}
+                                        </div>
+                                    ` : '-'}
                                 </td>
                             </tr>
                         `;
@@ -797,11 +813,13 @@ function renderPairRankingTable(ranking, rankingType = 'pair', categoryKey = 'al
                                 <td>${club}</td>
                                 <td><strong>${item.score}</strong></td>
                                 <td class="no-print">
-                                    <div class="rank-controls">
-                                        <button class="rank-btn rank-up" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
-                                        <button class="rank-btn rank-down" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
-                                        ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}">↻</button>` : ''}
-                                    </div>
+                                    ${isTied ? `
+                                        <div class="rank-controls">
+                                            <button class="rank-btn rank-up" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
+                                            <button class="rank-btn rank-down" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
+                                            ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="${rankingType}" data-category-key="${categoryKey}" data-entity-id="${entityId}">↻</button>` : ''}
+                                        </div>
+                                    ` : '-'}
                                 </td>
                             </tr>
                         `;
@@ -864,7 +882,7 @@ function renderClubRankingTable(ranking) {
     // Apply manual rank overrides
     const rankedItems = applyRankOverrides(ranking, 'club', 'all');
     
-    // Detect ties based on scores (find scores that appear more than once)
+    // Detect ties based on total scores (find scores that appear more than once)
     const scoreCount = {};
     rankedItems.forEach(item => {
         scoreCount[item.total] = (scoreCount[item.total] || 0) + 1;
@@ -902,11 +920,13 @@ function renderClubRankingTable(ranking) {
                                 <td>${item.pairTotal}</td>
                                 <td><strong>${item.total}</strong></td>
                                 <td class="no-print">
-                                    <div class="rank-controls">
-                                        <button class="rank-btn rank-up" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
-                                        <button class="rank-btn rank-down" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
-                                        ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}">↻</button>` : ''}
-                                    </div>
+                                    ${isTied ? `
+                                        <div class="rank-controls">
+                                            <button class="rank-btn rank-up" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === 0 ? 'disabled' : ''}>▲</button>
+                                            <button class="rank-btn rank-down" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}" data-current-rank="${currentRank}" ${displayIndex === rankedItems.length - 1 ? 'disabled' : ''}>▼</button>
+                                            ${item.manualRank !== null ? `<button class="rank-btn rank-reset" data-ranking-type="club" data-category-key="all" data-entity-id="${entityId}">↻</button>` : ''}
+                                        </div>
+                                    ` : '-'}
                                 </td>
                             </tr>
                         `;
