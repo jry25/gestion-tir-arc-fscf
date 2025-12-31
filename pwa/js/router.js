@@ -24,8 +24,8 @@ class Router {
     async navigate(path) {
         const handler = this.routes[path];
         
-        if (!handler) {
-            console.error(`Route not found: ${path}`);
+        if (!handler || typeof handler !== 'function') {
+            console.error(`Route not found or invalid handler for path: ${path}`);
             return;
         }
 
