@@ -17,7 +17,7 @@ import * as SettingsPage from './pages/settings.js';
  */
 class App {
     constructor() {
-        this.version = '1.3.1'; // x-release-please-version
+        this.version = '1.3.2'; // x-release-please-version
         this.serviceWorkerRegistration = null;
     }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.3.1...v1.3.2) (2025-12-31)
+
+
+### 🐛 Bug Fixes
+
+* correct tie handling in rankings - manual ranks now sort within score groups ([#31](https://github.com/jry25/gestion-tir-arc-fscf/issues/31)) ([07b4e81](https://github.com/jry25/gestion-tir-arc-fscf/commit/07b4e81a8a2030c57d461958aecc4c1830bcc2ea))
+
 ## [1.3.1](https://github.com/jry25/gestion-tir-arc-fscf/compare/v1.3.0...v1.3.1) (2025-12-31)
 
 
